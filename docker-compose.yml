@@ -1,0 +1,22 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: farmacias-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: farmacias
+      POSTGRES_USER: farmacias
+      POSTGRES_PASSWORD: farmacias
+    ports:
+      - "5433:5432"
+    volumes:
+      - farmacias_pgdata:/var/lib/postgresql/data
+      - ./backend/db/db.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farmacias -d farmacias"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  farmacias_pgdata:
