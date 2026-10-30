@@ -1,9 +1,19 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.models.entities import MovementType
+
+
+class InventoryLot(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    lot_number: str
+    expiration_date: date
+    current_quantity: int
+    status: str
 
 
 class InventoryItem(BaseModel):
@@ -12,6 +22,7 @@ class InventoryItem(BaseModel):
     barcode: str
     minimum_stock: int
     total_stock: int
+    lots: list[InventoryLot] = Field(default_factory=list)
 
 
 class LotResponse(BaseModel):
@@ -52,10 +63,23 @@ class MovementResponse(BaseModel):
     created_at: datetime
 
 
+class KardexEntry(MovementResponse):
+    lot_number: str
+    user_name: str
+
+
 class SaleRequest(BaseModel):
     medicine_id: int
     quantity: int = Field(gt=0)
+    movement_type: MovementType = MovementType.SALE
+    lot_id: int | None = None
     reason: str | None = Field(default=None, max_length=255)
+
+    @model_validator(mode="after")
+    def validate_movement_type(self) -> "SaleRequest":
+        if self.movement_type not in (MovementType.SALE, MovementType.WASTE):
+            raise ValueError("Movement type must be SALE or WASTE")
+        return self
 
 
 class SuggestedLot(BaseModel):

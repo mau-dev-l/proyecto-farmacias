@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.inventory import LotResponse
+
 
 class MedicineBase(BaseModel):
     barcode: str = Field(min_length=1, max_length=30)
@@ -33,3 +35,8 @@ class MedicineResponse(MedicineBase):
 
     id: int
     active: bool
+
+
+class BarcodeLookupResponse(MedicineResponse):
+    total_stock: int
+    lots: list[LotResponse]

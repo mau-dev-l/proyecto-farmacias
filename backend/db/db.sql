@@ -1,18 +1,29 @@
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TYPE rol_usuario AS ENUM ('ADMIN','EMPLEADO');
-CREATE TYPE tipo_movimiento AS ENUM ('ENTRADA','SALIDA_VENTA','SALIDA_MERMA','AJUSTE');
-CREATE TYPE estado_lote AS ENUM ('ACTIVO','AGOTADO','VENCIDO');
-CREATE TYPE tipo_alerta AS ENUM ('PROXIMO_VENCER','VENCIDO','STOCK_MINIMO');
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'rol_usuario') THEN
+    CREATE TYPE rol_usuario AS ENUM ('ADMIN', 'EMPLEADO');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tipo_movimiento') THEN
+    CREATE TYPE tipo_movimiento AS ENUM ('ENTRADA', 'SALIDA_VENTA', 'SALIDA_MERMA', 'AJUSTE');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'estado_lote') THEN
+    CREATE TYPE estado_lote AS ENUM ('ACTIVO', 'AGOTADO', 'VENCIDO');
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'tipo_alerta') THEN
+    CREATE TYPE tipo_alerta AS ENUM ('PROXIMO_VENCER', 'VENCIDO', 'STOCK_MINIMO');
+  END IF;
+END $$;
 
-CREATE TABLE sucursales (
+CREATE TABLE IF NOT EXISTS sucursales (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(120) NOT NULL UNIQUE,
   direccion VARCHAR(255),
   activa BOOLEAN NOT NULL DEFAULT TRUE
 );
 
-CREATE TABLE usuarios (
+CREATE TABLE IF NOT EXISTS usuarios (
   id SERIAL PRIMARY KEY,
   sucursal_id INT NOT NULL REFERENCES sucursales(id),
   nombre VARCHAR(120) NOT NULL,
@@ -25,13 +36,13 @@ CREATE TABLE usuarios (
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE proveedores (
+CREATE TABLE IF NOT EXISTS proveedores (
   id SERIAL PRIMARY KEY,
   nombre VARCHAR(150) NOT NULL,
   telefono VARCHAR(20)
 );
 
-CREATE TABLE medicamentos (
+CREATE TABLE IF NOT EXISTS medicamentos (
   id SERIAL PRIMARY KEY,
   codigo_barras VARCHAR(30) NOT NULL UNIQUE,
   nombre VARCHAR(150) NOT NULL,
@@ -41,9 +52,9 @@ CREATE TABLE medicamentos (
   stock_minimo INT NOT NULL DEFAULT 0 CHECK (stock_minimo >= 0),
   activo BOOLEAN NOT NULL DEFAULT TRUE
 );
-CREATE INDEX ix_med_nombre ON medicamentos (lower(nombre));
+CREATE INDEX IF NOT EXISTS ix_med_nombre ON medicamentos (lower(nombre));
 
-CREATE TABLE lotes (
+CREATE TABLE IF NOT EXISTS lotes (
   id SERIAL PRIMARY KEY,
   medicamento_id INT NOT NULL REFERENCES medicamentos(id),
   sucursal_id INT NOT NULL REFERENCES sucursales(id),
@@ -56,10 +67,10 @@ CREATE TABLE lotes (
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (medicamento_id, sucursal_id, numero_lote)
 );
-CREATE INDEX ix_lotes_peps ON lotes (medicamento_id, sucursal_id, fecha_caducidad)
+CREATE INDEX IF NOT EXISTS ix_lotes_peps ON lotes (medicamento_id, sucursal_id, fecha_caducidad)
   WHERE cantidad_actual > 0;
 
-CREATE TABLE movimientos (
+CREATE TABLE IF NOT EXISTS movimientos (
   id BIGSERIAL PRIMARY KEY,
   lote_id INT NOT NULL REFERENCES lotes(id),
   usuario_id INT NOT NULL REFERENCES usuarios(id),
@@ -70,17 +81,17 @@ CREATE TABLE movimientos (
   motivo VARCHAR(255),
   creado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX ix_mov_lote_fecha ON movimientos (lote_id, creado_en);
-CREATE INDEX ix_mov_fecha ON movimientos (creado_en);
+CREATE INDEX IF NOT EXISTS ix_mov_lote_fecha ON movimientos (lote_id, creado_en);
+CREATE INDEX IF NOT EXISTS ix_mov_fecha ON movimientos (creado_en);
 
-CREATE TABLE configuracion_alertas (
+CREATE TABLE IF NOT EXISTS configuracion_alertas (
   id SERIAL PRIMARY KEY,
   sucursal_id INT NOT NULL REFERENCES sucursales(id),
   dias_anticipacion INT NOT NULL CHECK (dias_anticipacion >= 1),
   UNIQUE (sucursal_id, dias_anticipacion)
 );
 
-CREATE TABLE alertas (
+CREATE TABLE IF NOT EXISTS alertas (
   id BIGSERIAL PRIMARY KEY,
   lote_id INT NOT NULL REFERENCES lotes(id),
   tipo tipo_alerta NOT NULL,
@@ -90,14 +101,14 @@ CREATE TABLE alertas (
   UNIQUE (lote_id, tipo, dias_umbral)
 );
 
-CREATE TABLE telegram_vinculos (
+CREATE TABLE IF NOT EXISTS telegram_vinculos (
   id SERIAL PRIMARY KEY,
   usuario_id INT NOT NULL UNIQUE REFERENCES usuarios(id),
   chat_id BIGINT NOT NULL UNIQUE,
   vinculado_en TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE TABLE codigos_vinculacion (
+CREATE TABLE IF NOT EXISTS codigos_vinculacion (
   id SERIAL PRIMARY KEY,
   usuario_id INT NOT NULL REFERENCES usuarios(id),
   codigo VARCHAR(10) NOT NULL UNIQUE,
@@ -105,15 +116,15 @@ CREATE TABLE codigos_vinculacion (
   usado BOOLEAN NOT NULL DEFAULT FALSE
 );
 
-CREATE TABLE documentos_rag (
+CREATE TABLE IF NOT EXISTS documentos_rag (
   id SERIAL PRIMARY KEY,
   fuente VARCHAR(150) NOT NULL,
   fragmento TEXT NOT NULL,
   embedding vector(768) NOT NULL
 );
-CREATE INDEX ix_rag_emb ON documentos_rag USING hnsw (embedding vector_cosine_ops);
+CREATE INDEX IF NOT EXISTS ix_rag_emb ON documentos_rag USING hnsw (embedding vector_cosine_ops);
 
-CREATE TABLE consultas_bot (
+CREATE TABLE IF NOT EXISTS consultas_bot (
   id BIGSERIAL PRIMARY KEY,
   usuario_id INT REFERENCES usuarios(id),
   pregunta TEXT NOT NULL,

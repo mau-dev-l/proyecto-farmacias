@@ -1,9 +1,11 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.core.config import settings
 from app.core.database import engine
+from app.core.exceptions import AppError
 from app.api.v1.routers import admin, alerts, auth, inventory, medicines, reports, telegram
 
 
@@ -30,6 +32,11 @@ app.include_router(reports.router, prefix=settings.api_prefix)
 app.include_router(admin.router, prefix=settings.api_prefix)
 app.include_router(telegram.router, prefix=settings.api_prefix)
 app.include_router(telegram.bot_router, prefix=settings.api_prefix)
+
+
+@app.exception_handler(AppError)
+def handle_app_error(_: Request, exc: AppError) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
 
 
 @app.get("/health", tags=["system"])

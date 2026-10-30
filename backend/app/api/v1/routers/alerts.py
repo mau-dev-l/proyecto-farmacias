@@ -1,14 +1,16 @@
-from datetime import date, timedelta
-
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import get_current_user, require_admin
-from app.models import Alert, AlertConfiguration, Lot, Medicine, User
-from app.models.entities import AlertType, LotStatus
-from app.schemas.alerts import AlertConfigurationRequest, AlertConfigurationResponse, AlertResponse
+from app.models import User
+from app.models.entities import AlertType
+from app.schemas.alerts import (
+    AlertConfigurationRequest,
+    AlertConfigurationResponse,
+    AlertResponse,
+)
+from app.services import alert_service
 
 router = APIRouter(tags=["alerts"])
 
@@ -19,39 +21,40 @@ def list_alerts(
     read: bool | None = Query(default=None, alias="leida"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> list[Alert]:
-    query = select(Alert).join(Lot, Alert.lot_id == Lot.id).where(Lot.branch_id == current_user.branch_id).order_by(Alert.created_at.desc())
-    if alert_type is not None:
-        query = query.where(Alert.alert_type == alert_type)
-    if read is not None:
-        query = query.where(Alert.read == read)
-    return list(db.scalars(query))
+) -> list[AlertResponse]:
+    return alert_service.list_alerts(db, current_user, alert_type, read)
 
 
 @router.patch("/alertas/{alert_id}/leida", response_model=AlertResponse)
-def mark_alert_read(alert_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> Alert:
-    alert = db.scalar(select(Alert).join(Lot, Alert.lot_id == Lot.id).where(Alert.id == alert_id, Lot.branch_id == current_user.branch_id))
-    if alert is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
-    alert.read = True
-    db.commit()
-    db.refresh(alert)
-    return alert
+def mark_alert_read(
+    alert_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> AlertResponse:
+    return alert_service.mark_read(db, current_user, alert_id)
+
+
+@router.post("/alertas/generar")
+def generate_alerts(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> dict[str, int]:
+    created = alert_service.generate_alerts(db, branch_id=current_user.branch_id)
+    return {"created": created}
 
 
 @router.get("/alertas/configuracion", response_model=AlertConfigurationResponse)
-def get_alert_configuration(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)) -> AlertConfigurationResponse:
-    config = db.scalar(select(AlertConfiguration).where(AlertConfiguration.branch_id == current_user.branch_id).order_by(AlertConfiguration.lead_days.desc()))
-    return AlertConfigurationResponse(branch_id=current_user.branch_id, lead_days=config.lead_days if config else 30)
+def get_alert_configuration(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> AlertConfigurationResponse:
+    return alert_service.get_configuration(db, current_user)
 
 
 @router.put("/alertas/configuracion", response_model=AlertConfigurationResponse)
-def set_alert_configuration(payload: AlertConfigurationRequest, current_user: User = Depends(require_admin), db: Session = Depends(get_db)) -> AlertConfigurationResponse:
-    config = db.scalar(select(AlertConfiguration).where(AlertConfiguration.branch_id == current_user.branch_id).order_by(AlertConfiguration.lead_days.desc()))
-    if config is None:
-        config = AlertConfiguration(branch_id=current_user.branch_id, lead_days=payload.lead_days)
-        db.add(config)
-    else:
-        config.lead_days = payload.lead_days
-    db.commit()
-    return AlertConfigurationResponse(branch_id=current_user.branch_id, lead_days=payload.lead_days)
+def set_alert_configuration(
+    payload: AlertConfigurationRequest,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> AlertConfigurationResponse:
+    return alert_service.set_configuration(db, current_user, payload)

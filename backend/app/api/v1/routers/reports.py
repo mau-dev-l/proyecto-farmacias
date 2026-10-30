@@ -1,17 +1,24 @@
-from datetime import date, timedelta
-from decimal import Decimal
+from datetime import date
+from typing import Literal
 
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy import case, func, select
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.deps import require_admin
-from app.models import Alert, Lot, Medicine, Movement, User
-from app.models.entities import AlertType, MovementType
-from app.schemas.alerts import DashboardResponse, ExpiringLotResponse, InventoryReportResponse
+from app.models import User
+from app.schemas.alerts import (
+    DashboardResponse,
+    ExpiringLotResponse,
+    InventoryReportResponse,
+    WasteReportResponse,
+)
+from app.schemas.inventory import KardexEntry
+from app.services import report_service
 
 router = APIRouter(prefix="/reportes", tags=["reports"])
+
+ReportType = Literal["mermas", "proximos-vencer", "inventario", "movimientos"]
 
 
 @router.get("/proximos-vencer", response_model=list[ExpiringLotResponse])
@@ -20,41 +27,64 @@ def expiring_lots(
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ) -> list[ExpiringLotResponse]:
-    remaining = (Lot.expiration_date - date.today()).label("days_remaining")
-    query = (
-        select(Lot.id, Medicine.name, Lot.lot_number, Lot.expiration_date, remaining, Lot.current_quantity, (Lot.current_quantity * Lot.unit_cost).label("risk_value"))
-        .join(Medicine, Lot.medicine_id == Medicine.id)
-        .where(Lot.branch_id == current_user.branch_id, Lot.current_quantity > 0, Lot.expiration_date.between(date.today(), date.today() + timedelta(days=days)))
-        .order_by(Lot.expiration_date)
-    )
-    return [ExpiringLotResponse(lot_id=row.id, medicine_name=row.name, lot_number=row.lot_number, expiration_date=row.expiration_date, days_remaining=row.days_remaining, quantity=row.current_quantity, risk_value=row.risk_value) for row in db.execute(query)]
+    return report_service.expiring_lots(db, current_user, days)
 
 
-@router.get("/mermas")
+@router.get("/mermas", response_model=WasteReportResponse)
 def waste_report(
     desde: date | None = None,
     hasta: date | None = None,
     current_user: User = Depends(require_admin),
     db: Session = Depends(get_db),
-) -> dict[str, Decimal | int]:
-    query = select(func.coalesce(func.sum(Movement.quantity * Movement.unit_cost), 0), func.coalesce(func.sum(Movement.quantity), 0)).join(Lot, Movement.lot_id == Lot.id).where(Lot.branch_id == current_user.branch_id, Movement.movement_type == MovementType.WASTE)
-    if desde:
-        query = query.where(Movement.created_at >= desde)
-    if hasta:
-        query = query.where(Movement.created_at < hasta + timedelta(days=1))
-    value, quantity = db.execute(query).one()
-    return {"quantity": quantity, "total_value": value}
+) -> WasteReportResponse:
+    return report_service.waste_report(db, current_user, desde, hasta)
 
 
 @router.get("/inventario", response_model=InventoryReportResponse)
-def inventory_report(current_user: User = Depends(require_admin), db: Session = Depends(get_db)) -> InventoryReportResponse:
-    total_units, total_value, medicine_count = db.execute(select(func.coalesce(func.sum(Lot.current_quantity), 0), func.coalesce(func.sum(Lot.current_quantity * Lot.unit_cost), 0), func.count(func.distinct(Lot.medicine_id))).where(Lot.branch_id == current_user.branch_id, Lot.current_quantity > 0)).one()
-    return InventoryReportResponse(total_units=total_units, total_value=total_value, medicine_count=medicine_count)
+def inventory_report(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> InventoryReportResponse:
+    return report_service.inventory_report(db, current_user)
+
+
+@router.get("/movimientos", response_model=list[KardexEntry])
+def movements_report(
+    desde: date | None = None,
+    hasta: date | None = None,
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> list[KardexEntry]:
+    return report_service.movements_report(db, current_user, desde, hasta)
 
 
 @router.get("/dashboard", response_model=DashboardResponse)
-def dashboard(current_user: User = Depends(require_admin), db: Session = Depends(get_db)) -> DashboardResponse:
-    report = inventory_report(current_user, db)
-    unread = db.scalar(select(func.count(Alert.id)).join(Lot, Alert.lot_id == Lot.id).where(Lot.branch_id == current_user.branch_id, Alert.read.is_(False))) or 0
-    expiring = db.scalar(select(func.count(Lot.id)).where(Lot.branch_id == current_user.branch_id, Lot.current_quantity > 0, Lot.expiration_date.between(date.today(), date.today() + timedelta(days=30)))) or 0
-    return DashboardResponse(**report.model_dump(), unread_alerts=unread, expiring_lots=expiring)
+def dashboard(
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> DashboardResponse:
+    return report_service.dashboard(db, current_user)
+
+
+@router.get("/exportar")
+def export_report(
+    tipo: ReportType,
+    desde: date | None = None,
+    hasta: date | None = None,
+    days: int = Query(default=30, ge=0, le=365),
+    current_user: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+) -> Response:
+    filename, content = report_service.export_csv(
+        db,
+        current_user,
+        tipo,
+        desde,
+        hasta,
+        days,
+    )
+    return Response(
+        content=content,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

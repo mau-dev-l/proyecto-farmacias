@@ -1,15 +1,18 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../auth'
 
-const links = [
-  { to: '/', label: 'Resumen', icon: '⌂' },
-  { to: '/inventario', label: 'Inventario', icon: '▦' },
-  { to: '/medicamentos', label: 'Medicamentos', icon: '＋' },
-  { to: '/alertas', label: 'Alertas', icon: '!' },
-]
-
 export function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth()
+  const links = [
+    { to: '/', label: 'Resumen', icon: '⌂' },
+    { to: '/inventario', label: 'Inventario', icon: '▦' },
+    { to: '/medicamentos', label: 'Medicamentos', icon: '＋' },
+    { to: '/movimientos', label: 'Movimientos', icon: '↔' },
+    { to: '/kardex', label: 'Kárdex', icon: '≡' },
+    { to: '/alertas', label: 'Alertas', icon: '!' },
+    { to: '/reportes', label: 'Reportes', icon: '📊' },
+    ...(user?.role === 'ADMIN' ? [{ to: '/admin', label: 'Administración', icon: '⚙' }] : []),
+  ]
   return <div className="app-shell">
     <aside className="sidebar">
       <div className="brand"><span className="brand-mark">✣</span><span>Farmacias<small>control operativo</small></span></div>
