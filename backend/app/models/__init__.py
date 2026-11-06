@@ -1,3 +1,4 @@
+
 from app.models.entities import (
     Alert,
     AlertConfiguration,
@@ -6,6 +7,9 @@ from app.models.entities import (
     Medicine,
     Movement,
     Supplier,
+    TelegramLink,
+    TelegramLinkCode,
+    TelegramLinkAttempt,
     User,
 )
 
@@ -17,5 +21,8 @@ __all__ = [
     "Medicine",
     "Movement",
     "Supplier",
+    "TelegramLink",
+    "TelegramLinkCode",
+    "TelegramLinkAttempt",
     "User",
 ]

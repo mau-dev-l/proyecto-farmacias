@@ -1,0 +1,86 @@
+import re
+import unicodedata
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class IntencionInventario:
+    tipo: str
+    busqueda: str = ""
+
+
+def _normalizar(texto: str) -> str:
+    texto = unicodedata.normalize("NFD", texto.lower())
+    texto = "".join(
+        caracter
+        for caracter in texto
+        if unicodedata.category(caracter) != "Mn"
+    )
+    return re.sub(r"\\s+", " ", texto).strip()
+
+
+def detectar_intencion_inventario(
+    texto: str,
+) -> IntencionInventario | None:
+    """Detecta consultas de inventario sin generar cantidades."""
+
+    if not isinstance(texto, str):
+        return None
+
+    texto = _normalizar(texto)
+
+    if not texto or len(texto) > 300:
+        return None
+
+    # No interceptar comandos de Telegram.
+    if texto.startswith("/"):
+        return None
+
+    # Consultas generales del inventario.
+    patrones_lista = (
+        r"(?:dime|muestra|mostrar|lista|listar|ver)"
+        r" (?:que|cuales|los)? ?medicamentos"
+        r"(?: tenemos| disponibles| en existencia)?",
+        r"(?:que|cuales) medicamentos tenemos",
+        r"(?:que|cuales) medicamentos hay",
+    )
+
+    for patron in patrones_lista:
+        if re.search(patron, texto):
+            return IntencionInventario(
+                tipo="listar",
+            )
+
+    # Preguntas sobre cantidades de un medicamento.
+    patrones_busqueda = (
+        r"(?:cuanto|cuantos|cuantas)"
+        r"(?: unidades| cajas| piezas)?"
+        r" (?:de )?(.+?)"
+        r" (?:tenemos|quedan|hay|disponibles)",
+        r"(?:hay|tenemos) (.+?) disponible",
+        r"(?:existencias|stock|inventario) de (.+)",
+    )
+
+    for patron in patrones_busqueda:
+        coincidencia = re.search(patron, texto)
+
+        if coincidencia:
+            medicamento = coincidencia.group(1)
+
+            medicamento = re.sub(
+                r"^(?:medicamento|medicamentos|de) ",
+                "",
+                medicamento,
+            )
+
+            medicamento = medicamento.strip(
+                " ??!?.,"
+            )
+
+            if medicamento:
+                return IntencionInventario(
+                    tipo="buscar",
+                    busqueda=medicamento,
+                )
+
+    return None

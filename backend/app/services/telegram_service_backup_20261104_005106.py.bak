@@ -1,0 +1,532 @@
+
+import hashlib
+import hmac
+import secrets
+import string
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.dialects.postgresql import insert
+
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.models import TelegramLink, TelegramLinkAttempt, TelegramLinkCode, User
+
+
+@dataclass(frozen=True)
+class CodigoVinculacionCreado:
+    """
+    Datos que se entregan al usuario al generar un codigo.
+    El codigo original no se almacena en PostgreSQL.
+    """
+    codigo: str
+    expira_en: datetime
+
+
+@dataclass(frozen=True)
+class ResultadoVinculacionTelegram:
+    """
+    Resultado de un intento de vincular Telegram.
+
+    Estados posibles:
+    - vinculacion_exitosa
+    - codigo_invalido
+    - chat_bloqueado
+    - usuario_ya_vinculado
+    - chat_ya_vinculado
+    """
+
+    estado: str
+    usuario_id: int | None = None
+
+    @property
+    def exitosa(self) -> bool:
+        return self.estado == "vinculacion_exitosa"
+
+
+def generar_codigo_vinculacion(longitud: int = 10) -> str:
+    """
+    Genera un codigo aleatorio criptograficamente seguro.
+    """
+    if longitud != 10:
+        raise ValueError(
+            "El codigo de vinculacion debe tener 10 caracteres"
+        )
+
+    caracteres = string.ascii_uppercase + string.digits
+
+    return "".join(
+        secrets.choice(caracteres)
+        for _ in range(longitud)
+    )
+
+
+def calcular_hash_codigo(codigo: str) -> str:
+    """
+    Protege el codigo mediante HMAC-SHA256.
+
+    Usa una clave secreta exclusiva del servidor.
+    Devuelve 64 caracteres hexadecimales.
+    """
+    return hmac.new(
+        settings.telegram_link_secret_key.encode("utf-8"),
+        codigo.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def crear_codigo_vinculacion(
+    db: Session,
+    usuario: User,
+) -> CodigoVinculacionCreado:
+    """
+    Genera un codigo temporal de vinculacion.
+
+    Reglas:
+    - El usuario debe estar activo.
+    - Su sucursal debe estar activa.
+    - El codigo expira en 10 minutos.
+    - Los codigos anteriores quedan invalidados.
+    - PostgreSQL almacena solo el HMAC del codigo.
+    - El codigo original se devuelve una sola vez.
+    """
+
+    if not usuario.active:
+        raise ValueError("El usuario esta inactivo")
+
+    if usuario.branch is None or not usuario.branch.active:
+        raise ValueError("La sucursal esta inactiva")
+
+    ahora = datetime.now(timezone.utc)
+    expira_en = ahora + timedelta(minutes=10)
+
+    try:
+        # Bloquear el registro del usuario durante la operacion.
+        # Ayuda a evitar generaciones simultaneas para
+        # el mismo usuario.
+        usuario_bloqueado = (
+            db.query(User)
+            .filter(User.id == usuario.id)
+            .with_for_update()
+            .first()
+        )
+
+        if usuario_bloqueado is None:
+            raise ValueError("El usuario no existe")
+
+        if not usuario_bloqueado.active:
+            raise ValueError("El usuario esta inactivo")
+
+        if (
+            usuario_bloqueado.branch is None
+            or not usuario_bloqueado.branch.active
+        ):
+            raise ValueError("La sucursal esta inactiva")
+
+        # Invalidar codigos anteriores del usuario.
+        db.query(TelegramLinkCode).filter(
+            TelegramLinkCode.user_id == usuario.id,
+            TelegramLinkCode.used.is_(False),
+        ).update(
+            {TelegramLinkCode.used: True},
+            synchronize_session=False,
+        )
+
+        # Generar un codigo cuyo HMAC no exista.
+        for _ in range(5):
+            codigo_original = generar_codigo_vinculacion()
+            codigo_hash = calcular_hash_codigo(codigo_original)
+
+            existe = (
+                db.query(TelegramLinkCode)
+                .filter(TelegramLinkCode.code == codigo_hash)
+                .first()
+            )
+
+            if existe is not None:
+                continue
+
+            registro = TelegramLinkCode(
+                user_id=usuario.id,
+                code=codigo_hash,
+                expires_at=expira_en,
+                used=False,
+            )
+
+            db.add(registro)
+            db.commit()
+
+            return CodigoVinculacionCreado(
+                codigo=codigo_original,
+                expira_en=expira_en,
+            )
+
+        raise RuntimeError(
+            "No fue posible generar un codigo unico"
+        )
+
+    except IntegrityError as exc:
+        db.rollback()
+        raise RuntimeError(
+            "No se pudo guardar el codigo de vinculacion"
+        ) from exc
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+
+def validar_codigo_vinculacion(
+    db: Session,
+    codigo: str,
+) -> bool:
+    """
+    Comprueba si un codigo de vinculacion existe,
+    no ha sido utilizado y no ha expirado.
+
+    Esta funcion solo consulta la base de datos.
+    No vincula cuentas ni consume el codigo.
+    """
+
+    codigo = codigo.strip().upper()
+
+    if len(codigo) != 10:
+        return False
+
+    caracteres_permitidos = set(
+        string.ascii_uppercase + string.digits
+    )
+
+    if not all(
+        caracter in caracteres_permitidos
+        for caracter in codigo
+    ):
+        return False
+
+    codigo_hash = calcular_hash_codigo(codigo)
+
+    ahora = datetime.now(timezone.utc)
+
+    registro = (
+        db.query(TelegramLinkCode)
+        .join(
+            User,
+            TelegramLinkCode.user_id == User.id,
+        )
+        .filter(
+            TelegramLinkCode.code == codigo_hash,
+            TelegramLinkCode.used.is_(False),
+            TelegramLinkCode.expires_at > ahora,
+            User.active.is_(True),
+        )
+        .first()
+    )
+
+    if registro is None:
+        return False
+
+    usuario = db.get(User, registro.user_id)
+
+    if usuario is None:
+        return False
+
+    if usuario.branch is None:
+        return False
+
+    if not usuario.branch.active:
+        return False
+
+    return True
+
+
+
+
+def registrar_intento_vinculacion(
+    db: Session,
+    chat_id: int,
+) -> bool:
+    """
+    Registra un intento fallido de vinculacion.
+
+    Politica:
+    - Maximo 5 intentos fallidos.
+    - Ventana de 15 minutos.
+    - Bloqueo de 15 minutos.
+
+    Devuelve True si el chat puede seguir intentando.
+    Devuelve False si esta bloqueado.
+
+    Esta funcion debe llamarse solamente cuando
+    falle una vinculacion.
+    """
+
+    if isinstance(chat_id, bool) or not isinstance(chat_id, int):
+        raise ValueError("chat_id invalido")
+
+    if chat_id <= 0:
+        raise ValueError("chat_id invalido")
+
+    ahora = datetime.now(timezone.utc)
+    ventana = timedelta(minutes=15)
+
+    try:
+        # Crear el registro si no existe.
+        # ON CONFLICT evita errores por solicitudes simultaneas.
+        from sqlalchemy.dialects.postgresql import insert
+
+        sentencia = insert(TelegramLinkAttempt).values(
+            chat_id=chat_id,
+            attempts=0,
+            window_started_at=ahora,
+            blocked_until=None,
+        ).on_conflict_do_nothing(
+            index_elements=["chat_id"]
+        )
+
+        db.execute(sentencia)
+
+        # Bloquear la fila para evitar que dos intentos
+        # modifiquen el contador simultaneamente.
+        registro = (
+            db.query(TelegramLinkAttempt)
+            .filter(TelegramLinkAttempt.chat_id == chat_id)
+            .with_for_update()
+            .one()
+        )
+
+        # Si el bloqueo sigue vigente, rechazar.
+        if (
+            registro.blocked_until is not None
+            and registro.blocked_until > ahora
+        ):
+            db.commit()
+            return False
+
+        # Si termino la ventana, reiniciar contador.
+        if ahora - registro.window_started_at >= ventana:
+            registro.attempts = 0
+            registro.window_started_at = ahora
+            registro.blocked_until = None
+
+        registro.attempts += 1
+
+        if registro.attempts >= 5:
+            registro.blocked_until = ahora + ventana
+            db.commit()
+            return False
+
+        db.commit()
+        return True
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+
+def chat_vinculacion_bloqueado(
+    db: Session,
+    chat_id: int,
+) -> bool:
+    """
+    Comprueba si un chat de Telegram tiene
+    un bloqueo de vinculacion vigente.
+
+    No incrementa los intentos fallidos.
+    Devuelve True si esta bloqueado.
+    """
+
+    if isinstance(chat_id, bool) or not isinstance(chat_id, int):
+        raise ValueError("chat_id invalido")
+
+    if chat_id <= 0:
+        raise ValueError("chat_id invalido")
+
+    ahora = datetime.now(timezone.utc)
+
+    registro = db.get(TelegramLinkAttempt, chat_id)
+
+    if registro is None:
+        return False
+
+    if registro.blocked_until is None:
+        return False
+
+    return registro.blocked_until > ahora
+
+
+def vincular_cuenta_telegram(
+    db: Session,
+    chat_id: int,
+    codigo: str,
+) -> ResultadoVinculacionTelegram:
+    """
+    Vincula un chat privado de Telegram con un usuario.
+
+    El chat_id debe provenir de Telegram, nunca de un
+    identificador escrito por el usuario.
+
+    Controla intentos, bloqueos y consumo del codigo
+    mediante transacciones y bloqueos de PostgreSQL.
+    """
+
+    if isinstance(chat_id, bool) or not isinstance(chat_id, int):
+        raise ValueError("chat_id invalido")
+
+    if chat_id <= 0:
+        raise ValueError("chat_id invalido")
+
+    if not isinstance(codigo, str):
+        raise ValueError("codigo invalido")
+
+    codigo = codigo.strip().upper()
+    caracteres = set(string.ascii_uppercase + string.digits)
+
+    formato_valido = (
+        len(codigo) == 10
+        and all(caracter in caracteres for caracter in codigo)
+    )
+
+    ventana = timedelta(minutes=15)
+
+    try:
+        # Crear la fila de control si no existe.
+        # Se bloqueara para serializar intentos del mismo chat.
+        db.execute(
+            insert(TelegramLinkAttempt)
+            .values(
+                chat_id=chat_id,
+                attempts=0,
+                window_started_at=datetime.now(timezone.utc),
+                blocked_until=None,
+            )
+            .on_conflict_do_nothing(index_elements=["chat_id"])
+        )
+
+        intento = (
+            db.query(TelegramLinkAttempt)
+            .filter(TelegramLinkAttempt.chat_id == chat_id)
+            .with_for_update()
+            .one()
+        )
+
+        ahora = datetime.now(timezone.utc)
+
+        if intento.blocked_until is not None:
+            if intento.blocked_until > ahora:
+                db.commit()
+                return ResultadoVinculacionTelegram(
+                    estado="chat_bloqueado"
+                )
+
+        if ahora - intento.window_started_at >= ventana:
+            intento.attempts = 0
+            intento.window_started_at = ahora
+            intento.blocked_until = None
+
+        def codigo_fallido() -> ResultadoVinculacionTelegram:
+            intento.attempts += 1
+
+            if intento.attempts >= 5:
+                intento.blocked_until = ahora + ventana
+                db.commit()
+                return ResultadoVinculacionTelegram(
+                    estado="chat_bloqueado"
+                )
+
+            db.commit()
+            return ResultadoVinculacionTelegram(
+                estado="codigo_invalido"
+            )
+
+        # Un codigo con formato incorrecto tambien cuenta
+        # como intento fallido.
+        if not formato_valido:
+            return codigo_fallido()
+
+        codigo_hash = calcular_hash_codigo(codigo)
+
+        registro = (
+            db.query(TelegramLinkCode)
+            .filter(TelegramLinkCode.code == codigo_hash)
+            .with_for_update()
+            .first()
+        )
+
+        if (
+            registro is None
+            or registro.used
+            or registro.expires_at <= ahora
+        ):
+            return codigo_fallido()
+
+        # Bloquear al usuario durante la comprobacion.
+        usuario = (
+            db.query(User)
+            .filter(User.id == registro.user_id)
+            .with_for_update()
+            .first()
+        )
+
+        if (
+            usuario is None
+            or not usuario.active
+            or usuario.branch is None
+            or not usuario.branch.active
+        ):
+            return codigo_fallido()
+
+        vinculo_chat = (
+            db.query(TelegramLink)
+            .filter(TelegramLink.chat_id == chat_id)
+            .first()
+        )
+
+        if vinculo_chat is not None:
+            db.commit()
+            return ResultadoVinculacionTelegram(
+                estado="chat_ya_vinculado"
+            )
+
+        vinculo_usuario = (
+            db.query(TelegramLink)
+            .filter(TelegramLink.user_id == usuario.id)
+            .first()
+        )
+
+        if vinculo_usuario is not None:
+            db.commit()
+            return ResultadoVinculacionTelegram(
+                estado="usuario_ya_vinculado"
+            )
+
+        db.add(
+            TelegramLink(
+                user_id=usuario.id,
+                chat_id=chat_id,
+            )
+        )
+
+        registro.used = True
+
+        # Vinculo y consumo del codigo se guardan juntos.
+        db.commit()
+
+        return ResultadoVinculacionTelegram(
+            estado="vinculacion_exitosa",
+            usuario_id=usuario.id,
+        )
+
+    except IntegrityError:
+        db.rollback()
+        return ResultadoVinculacionTelegram(
+            estado="codigo_invalido"
+        )
+
+    except Exception:
+        db.rollback()
+        raise

@@ -1,0 +1,88 @@
+from dataclasses import dataclass
+from datetime import date
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.models import Lot, Medicine
+from app.models.entities import LotStatus
+from app.services.telegram_identity_service import (
+    obtener_identidad_telegram,
+)
+
+
+@dataclass(frozen=True)
+class ExistenciaMedicamento:
+    medicamento_id: int
+    nombre: str
+    cantidad: int
+
+
+def consultar_existencias_telegram(
+    db: Session,
+    chat_id: int,
+    busqueda: str,
+) -> list[ExistenciaMedicamento] | None:
+    """Consulta existencias de la sucursal autorizada del chat."""
+
+    identidad = obtener_identidad_telegram(db, chat_id)
+
+    if identidad is None:
+        return None
+
+    if not isinstance(busqueda, str):
+        return []
+
+    busqueda = busqueda.strip()
+
+    if not busqueda or len(busqueda) > 150:
+        return []
+
+    patron = (
+        "%"
+        + busqueda.replace(
+            "\\", "\\\\"
+        ).replace(
+            "%", "\\%"
+        ).replace(
+            "_", "\\_"
+        )
+        + "%"
+    )
+
+    consulta = (
+        select(
+            Medicine.id,
+            Medicine.name,
+            func.sum(Lot.current_quantity).label("cantidad"),
+        )
+        .join(
+            Lot,
+            Lot.medicine_id == Medicine.id,
+        )
+        .where(
+            Medicine.active.is_(True),
+            Medicine.name.ilike(patron, escape="\\"),
+            Lot.branch_id == identidad.sucursal_id,
+            Lot.status == LotStatus.ACTIVE,
+            Lot.current_quantity > 0,
+            Lot.expiration_date >= date.today(),
+        )
+        .group_by(
+            Medicine.id,
+            Medicine.name,
+        )
+        .order_by(Medicine.name)
+        .limit(20)
+    )
+
+    resultados = db.execute(consulta).all()
+
+    return [
+        ExistenciaMedicamento(
+            medicamento_id=fila[0],
+            nombre=fila[1],
+            cantidad=int(fila[2]),
+        )
+        for fila in resultados
+    ]

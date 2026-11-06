@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
 
-from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -131,3 +131,88 @@ class Alert(Base):
     threshold_days: Mapped[int | None] = mapped_column("dias_umbral", Integer)
     read: Mapped[bool] = mapped_column("leida", Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column("creada_en", DateTime(timezone=True), server_default=func.now())
+
+
+
+class TelegramLinkCode(Base):
+    __tablename__ = "codigos_vinculacion"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        "usuario_id",
+        ForeignKey("usuarios.id"),
+        nullable=False,
+    )
+    
+    code: Mapped[str] = mapped_column(
+        "codigo",
+        String(64),
+        unique=True,
+        nullable=False,
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        "expira_en",
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    used: Mapped[bool] = mapped_column(
+        "usado",
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+
+class TelegramLink(Base):
+    __tablename__ = "telegram_vinculos"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        "usuario_id",
+        ForeignKey("usuarios.id"),
+        unique=True,
+        nullable=False,
+    )
+    chat_id: Mapped[int] = mapped_column(
+    "chat_id",
+    BigInteger,
+    unique=True,
+    nullable=False,
+    )
+    linked_at: Mapped[datetime] = mapped_column(
+        "vinculado_en",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+
+
+class TelegramLinkAttempt(Base):
+    __tablename__ = "telegram_intentos_vinculacion"
+
+    chat_id: Mapped[int] = mapped_column(
+        BigInteger,
+        primary_key=True,
+    )
+
+    attempts: Mapped[int] = mapped_column(
+        "intentos",
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    window_started_at: Mapped[datetime] = mapped_column(
+        "ventana_inicio",
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    blocked_until: Mapped[datetime | None] = mapped_column(
+        "bloqueado_hasta",
+        DateTime(timezone=True),
+        nullable=True,
+    )

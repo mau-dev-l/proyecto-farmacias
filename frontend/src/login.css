@@ -1,0 +1,367 @@
+
+.clinical-login {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 48% 52%;
+  font-family: 'DM Sans', sans-serif;
+  background: #f5f9fd;
+  color: #263a54;
+}
+
+.clinical-hero {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 8%;
+  color: white;
+  background: linear-gradient(
+    145deg,
+    #174a7e 0%,
+    #10385f 65%,
+    #092a4c 100%
+  );
+}
+
+.clinical-hero::before,
+.clinical-hero::after {
+  content: '';
+  position: absolute;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.clinical-hero::before {
+  width: 550px;
+  height: 550px;
+  top: 10%;
+  right: -320px;
+}
+
+.clinical-hero::after {
+  width: 350px;
+  height: 350px;
+  bottom: -220px;
+  left: -160px;
+}
+
+.clinical-brand {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  position: relative;
+  z-index: 1;
+}
+
+.clinical-logo {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.16);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 13px;
+  font-size: 25px;
+}
+
+.clinical-brand strong {
+  display: block;
+  font-size: 20px;
+  letter-spacing: 2px;
+}
+
+.clinical-brand small {
+  display: block;
+  margin-top: 4px;
+  color: #bdd9f0;
+  font-size: 11px;
+}
+
+.clinical-hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 490px;
+}
+
+.clinical-symbol {
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 36px;
+  border-radius: 25px;
+  background: rgba(255,255,255,.12);
+  color: #c7ebff;
+  font-size: 53px;
+}
+
+.clinical-tag {
+  display: inline-block;
+  margin-bottom: 18px;
+  color: #b7d9f5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.clinical-hero h1 {
+  margin: 0;
+  font-size: clamp(36px, 4vw, 62px);
+  line-height: 1.13;
+  letter-spacing: -2px;
+}
+
+.clinical-hero h1 span {
+  color: #a9dcff;
+}
+
+.clinical-hero-content > p {
+  max-width: 410px;
+  margin: 24px 0 35px;
+  color: #d1e4f4;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.clinical-features {
+  display: grid;
+  gap: 17px;
+  font-size: 13px;
+}
+
+.clinical-features div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.clinical-features span {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(180,220,255,.17);
+  color: #c4e8ff;
+}
+
+.clinical-hero-footer {
+  position: relative;
+  z-index: 1;
+  color: #a9c8e0;
+  font-size: 11px;
+}
+
+.clinical-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 55px 30px 25px;
+}
+
+.clinical-card {
+  width: min(420px, 100%);
+  padding: 45px 38px;
+  background: #fff;
+  border: 1px solid #e1ebf4;
+  border-radius: 22px;
+  box-shadow: 0 20px 65px rgba(23,74,126,.07);
+}
+
+.clinical-mobile-logo {
+  display: none;
+}
+
+.clinical-welcome-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 25px;
+  border-radius: 14px;
+  background: #dceef9;
+  color: #174a7e;
+  font-size: 26px;
+}
+
+.clinical-eyebrow {
+  display: block;
+  margin-bottom: 12px;
+  color: #3776a7;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.clinical-card h2 {
+  margin: 0;
+  color: #173858;
+  font-size: 29px;
+  letter-spacing: -1px;
+  line-height: 1.2;
+}
+
+.clinical-description {
+  margin: 15px 0 32px;
+  color: #74869a;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.clinical-card form {
+  display: flex;
+  flex-direction: column;
+}
+
+.clinical-card form > label {
+  margin-bottom: 9px;
+  color: #263a54;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.clinical-card input {
+  width: 100%;
+  min-width: 0;
+  height: 49px;
+  padding: 0 15px;
+  margin-bottom: 22px;
+  border: 1px solid #d6e3ef;
+  border-radius: 10px;
+  outline: none;
+  background: #fbfdff;
+  color: #263a54;
+  font: inherit;
+  font-size: 13px;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.clinical-card input:focus {
+  border-color: #367bb5;
+  box-shadow: 0 0 0 4px rgba(54,123,181,.12);
+}
+
+.clinical-password-wrap {
+  position: relative;
+}
+
+.clinical-password-wrap input {
+  padding-right: 85px;
+}
+
+.clinical-show-password {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  padding: 5px;
+  border: none;
+  background: transparent;
+  color: #3975a6;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.clinical-submit {
+  width: 100%;
+  min-height: 51px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 8px;
+  border: 0;
+  border-radius: 10px;
+  background: #174a7e;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  transition: background .2s, transform .2s;
+}
+
+.clinical-submit:hover:not(:disabled) {
+  background: #10385f;
+  transform: translateY(-1px);
+}
+
+.clinical-submit:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+
+.clinical-submit span {
+  font-size: 20px;
+}
+
+.clinical-error {
+  margin-bottom: 15px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #fff0ef;
+  color: #ad3e38;
+  font-size: 12px;
+}
+
+.clinical-security {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+  color: #8395a7;
+  font-size: 11px;
+  text-align: center;
+}
+
+.clinical-copyright {
+  margin-top: 28px;
+  color: #94a4b3;
+  font-size: 11px;
+  text-align: center;
+}
+
+@media (max-width: 850px) {
+  .clinical-login {
+    grid-template-columns: 1fr;
+  }
+
+  .clinical-hero {
+    display: none;
+  }
+
+  .clinical-panel {
+    min-height: 100vh;
+    padding: 30px 18px;
+  }
+
+  .clinical-mobile-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    color: #174a7e;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+
+  .clinical-mobile-logo span {
+    font-size: 25px;
+  }
+
+  .clinical-card {
+    padding: 32px 25px;
+  }
+}
+
+@media (max-width: 400px) {
+  .clinical-card {
+    padding: 26px 19px;
+  }
+
+  .clinical-card h2 {
+    font-size: 25px;
+  }
+}

@@ -1,0 +1,284 @@
+
+import os
+
+import httpx
+
+from telegram.ai.agent import responder_documentacion
+from app.core.database import SessionLocal
+from app.services.telegram_service import vincular_cuenta_telegram
+from app.services.telegram_inventory_service import (
+    consultar_existencias_telegram,
+    listar_existencias_telegram,
+)
+from app.services.telegram_inventory_intent import (
+    detectar_intencion_inventario,
+)
+
+
+TELEGRAM_API_URL = "https://api.telegram.org"
+
+
+def obtener_token() -> str:
+    """Obtiene el token del bot desde una variable de entorno."""
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+
+    if not token:
+        raise RuntimeError(
+            "No se encontró TELEGRAM_BOT_TOKEN. "
+            "Configura el token antes de conectar el bot."
+        )
+
+    return token
+
+
+def verificar_bot() -> dict:
+    """Comprueba la conexión con la API de Telegram."""
+    token = obtener_token()
+
+    with httpx.Client(timeout=15.0) as cliente:
+        respuesta = cliente.get(
+            f"{TELEGRAM_API_URL}/bot{token}/getMe"
+        )
+        respuesta.raise_for_status()
+        datos = respuesta.json()
+
+    if not datos.get("ok"):
+        raise RuntimeError(
+            "Telegram no pudo verificar el bot."
+        )
+
+    return datos["result"]
+
+
+def enviar_mensaje(chat_id: int, mensaje: str) -> dict:
+    """Envía un mensaje de texto a un chat de Telegram."""
+    token = obtener_token()
+
+    with httpx.Client(timeout=15.0) as cliente:
+        respuesta = cliente.post(
+            f"{TELEGRAM_API_URL}/bot{token}/sendMessage",
+            json={
+                "chat_id": chat_id,
+                "text": mensaje,
+            },
+        )
+        respuesta.raise_for_status()
+        datos = respuesta.json()
+
+    if not datos.get("ok"):
+        raise RuntimeError(
+            "Telegram no pudo enviar el mensaje."
+        )
+
+    return datos["result"]
+
+
+def obtener_actualizaciones(offset=None) -> list:
+    """Obtiene mensajes pendientes desde Telegram."""
+    token = obtener_token()
+
+    parametros = {
+        "timeout": 20,
+    }
+
+    if offset is not None:
+        parametros["offset"] = offset
+
+    with httpx.Client(timeout=30.0) as cliente:
+        respuesta = cliente.get(
+            f"{TELEGRAM_API_URL}/bot{token}/getUpdates",
+            params=parametros,
+        )
+        respuesta.raise_for_status()
+        datos = respuesta.json()
+
+    if not datos.get("ok"):
+        raise RuntimeError(
+            "No se pudieron obtener los mensajes."
+        )
+
+    return datos["result"]
+
+
+def procesar_mensaje(mensaje: dict) -> None:
+    """Procesa un mensaje y genera la respuesta correspondiente."""
+    chat_id = mensaje["chat"]["id"]
+    texto = mensaje.get("text", "").strip()
+
+    if not texto:
+        return
+
+    comando = texto.split(maxsplit=1)[0].split("@")[0].lower()
+
+    if comando == "/vincular":
+        if mensaje.get("chat", {}).get("type") != "private":
+            respuesta = (
+                "Por seguridad, utiliza /vincular "
+                "solamente en un chat privado conmigo."
+            )
+        else:
+            partes = texto.split()
+
+            if len(partes) == 1:
+                respuesta = (
+                    "Para vincular tu cuenta escribe: "
+                    "/vincular CODIGO"
+                )
+            else:
+                db = SessionLocal()
+
+                try:
+                    codigo_recibido = (
+                        partes[1] if len(partes) == 2 else ""
+                    )
+
+                    resultado = vincular_cuenta_telegram(
+                        db,
+                        chat_id,
+                        codigo_recibido,
+                    )
+
+                    respuestas = {
+                        "vinculacion_exitosa": (
+                            "Tu cuenta fue vinculada correctamente."
+                        ),
+                        "codigo_invalido": (
+                            "El codigo es invalido, ya fue utilizado "
+                            "o ha expirado."
+                        ),
+                        "chat_bloqueado": (
+                            "Demasiados intentos. Espera 15 minutos "
+                            "antes de volver a intentarlo."
+                        ),
+                        "chat_ya_vinculado": (
+                            "Este chat ya tiene una cuenta vinculada."
+                        ),
+                        "usuario_ya_vinculado": (
+                            "Esta cuenta ya esta vinculada "
+                            "a otro chat de Telegram."
+                        ),
+                    }
+
+                    respuesta = respuestas.get(
+                        resultado.estado,
+                        "No fue posible completar la vinculacion.",
+                    )
+
+                except Exception as error:
+                    print(
+                        "Error de vinculacion:",
+                        type(error).__name__,
+                    )
+                    respuesta = (
+                        "No pude procesar la vinculacion "
+                        "en este momento. Intenta nuevamente."
+                    )
+
+                finally:
+                    db.close()
+
+    elif comando == "/stock":
+        if mensaje.get("chat", {}).get("type") != "private":
+            respuesta = (
+                "Por seguridad, consulta el inventario "
+                "solamente en un chat privado conmigo."
+            )
+        else:
+            partes = texto.split(maxsplit=1)
+            busqueda = partes[1].strip() if len(partes) == 2 else ""
+
+            if not busqueda:
+                respuesta = (
+                    "Para consultar existencias escribe: "
+                    "/stock NOMBRE_MEDICAMENTO"
+                )
+            else:
+                db = None
+
+                try:
+                    db = SessionLocal()
+
+                    resultados = consultar_existencias_telegram(
+                        db,
+                        chat_id,
+                        busqueda,
+                    )
+
+                    if resultados is None:
+                        respuesta = (
+                            "No tienes una cuenta activa vinculada. "
+                            "Solicita tu codigo de vinculacion "
+                            "e ingresa /vincular CODIGO."
+                        )
+
+                    elif not resultados:
+                        respuesta = (
+                            "No encontre existencias disponibles "
+                            "para esa busqueda en tu sucursal."
+                        )
+
+                    else:
+                        lineas = [
+                            "Existencias disponibles en tu sucursal:"
+                        ]
+
+                        for medicamento in resultados:
+                            lineas.append(
+                                f"- {medicamento.nombre}: "
+                                f"{medicamento.cantidad} unidades"
+                            )
+
+                        respuesta = "\n".join(lineas)
+
+                except Exception as error:
+                    print(
+                        "Error al consultar inventario:",
+                        type(error).__name__,
+                    )
+                    respuesta = (
+                        "No pude consultar el inventario "
+                        "en este momento. Intenta nuevamente."
+                    )
+
+                finally:
+                    if db is not None:
+                        db.close()
+
+    elif texto == "/start" or texto.lower() == "hola":
+        respuesta = (
+            "?Hola! ???? Soy tu Asistente Inteligente de Farmacias.\n\n"
+            "Puedo ayudarte a:\n"
+            "?? Consultar existencias de medicamentos.\n"
+            "?? Ver qu? medicamentos tenemos disponibles.\n"
+            "?? Resolver dudas sobre nuestro sistema.\n"
+            "?? Explicar PEPS, caducidades y movimientos.\n\n"
+            "Prueba preguntarme:\n"
+            "? ?Cu?nto paracetamol tenemos?\n"
+            "? Dime qu? medicamentos tenemos\n"
+            "? ?C?mo funciona el m?todo PEPS?"
+        )
+
+
+    enviar_mensaje(chat_id, respuesta)
+
+
+def iniciar_bot() -> None:
+    """Mantiene el bot escuchando mensajes de Telegram."""
+    print("🤖 Bot de Telegram iniciado. Esperando mensajes...")
+
+    offset = None
+
+    while True:
+        actualizaciones = obtener_actualizaciones(offset)
+
+        for actualizacion in actualizaciones:
+            offset = actualizacion["update_id"] + 1
+
+            mensaje = actualizacion.get("message")
+
+            if mensaje and "text" in mensaje:
+                procesar_mensaje(mensaje)
+
+
+if __name__ == "__main__":
+    iniciar_bot()

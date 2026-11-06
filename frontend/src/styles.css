@@ -83,3 +83,212 @@ button { cursor: pointer; }
 .hint-list { margin: 0; padding-left: 17px; color: var(--muted); font-size: 11px; line-height: 1.7; }
 .inline-actions { display: flex; gap: 7px; align-items: center; }
 @media (max-width: 680px) { .form-grid, .split-panel { grid-template-columns: 1fr; } .form-grid .span-2 { grid-column: auto; } .modal-card { padding: 18px; } .nav-list { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(58px, 1fr); overflow-x: auto; } }
+
+
+
+/* ==========================================
+   TEMA CLÍNICO - PANEL ADMINISTRATIVO
+   ========================================== */
+
+:root {
+  --ink: #263a54;
+  --muted: #71869a;
+  --line: #dce7f1;
+  --paper: #ffffff;
+  --green: #174a7e;
+  --blue: #367bb5;
+  --amber: #d69a35;
+  --red: #c65c58;
+}
+
+body {
+  background: #f5f9fd;
+  color: #263a54;
+}
+
+/* MENÚ LATERAL */
+
+.sidebar {
+  background: #174a7e;
+  color: #ffffff;
+}
+
+.brand {
+  color: #ffffff;
+}
+
+.brand small {
+  color: #c1d9ed;
+}
+
+.brand-mark {
+  background: #dceef9;
+  color: #174a7e;
+}
+
+.nav-item {
+  color: #c6dced;
+}
+
+.nav-icon {
+  color: #dceef9;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #316998;
+  color: #ffffff;
+}
+
+.nav-item.active {
+  box-shadow: inset 3px 0 #a9dcff;
+}
+
+.branch-chip {
+  border-top-color: #477da9;
+  color: #d2e4f2;
+}
+
+.user-mini {
+  border-top-color: #477da9;
+  color: #ffffff;
+}
+
+.user-mini small,
+.logout-icon {
+  color: #c1d9ed;
+}
+
+.avatar {
+  background: #dceef9;
+  color: #174a7e;
+}
+
+/* CONTENIDO PRINCIPAL */
+
+.main-content {
+  background: #f5f9fd;
+}
+
+.page-header h1,
+.panel-heading h2,
+.table-heading h2 {
+  color: #263a54;
+}
+
+.eyebrow {
+  color: #477da9;
+}
+
+/* TARJETAS Y PANELES */
+
+.panel,
+.metric-card,
+.quick-actions a,
+.table-panel {
+  background: #ffffff;
+  border-color: #dce7f1;
+  border-radius: 12px;
+}
+
+.metric-card {
+  box-shadow: 0 4px 18px rgba(23, 74, 126, .04);
+}
+
+.metric-card.green {
+  background: #f0f7ff;
+  border-color: #c8e0f3;
+}
+
+.metric-card.blue {
+  background: #f5faff;
+  border-color: #d3e6f6;
+}
+
+.metric-card.amber {
+  background: #fffbf2;
+  border-color: #f0dfba;
+}
+
+.metric-card.red {
+  background: #fff7f6;
+  border-color: #f1d7d3;
+}
+
+.metric-card.green .metric-mark {
+  background: #174a7e;
+}
+
+.metric-card.blue .metric-mark {
+  background: #367bb5;
+}
+
+/* BOTONES */
+
+.primary-button {
+  background: #174a7e;
+  color: #ffffff;
+  border-radius: 9px;
+}
+
+.primary-button:hover {
+  background: #10385f;
+}
+
+.primary-button span {
+  color: #dceef9;
+}
+
+.secondary-button,
+.filter-button {
+  border-color: #dce7f1;
+  color: #174a7e;
+  border-radius: 9px;
+}
+
+/* TABLAS */
+
+th {
+  color: #71869a;
+  border-bottom-color: #dce7f1;
+}
+
+td {
+  border-bottom-color: #edf2f7;
+}
+
+td strong {
+  color: #263a54;
+}
+
+/* CAMPOS DE FORMULARIOS */
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #367bb5;
+  box-shadow: 0 0 0 3px rgba(54, 123, 181, .12);
+}
+
+/* PESTAÑAS */
+
+.tab.active {
+  border-bottom-color: #174a7e;
+  color: #174a7e;
+}
+
+/* MODALES */
+
+.modal-card {
+  border-radius: 15px;
+  box-shadow: 0 24px 60px rgba(23, 74, 126, .16);
+}
+
+/* ADAPTACIÓN MÓVIL */
+
+@media (max-width: 680px) {
+  .nav-item.active {
+    box-shadow: inset 0 -3px #a9dcff;
+  }
+}
+
