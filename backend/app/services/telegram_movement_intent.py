@@ -46,3 +46,4 @@ def detectar_intencion_movimiento(texto: str) -> bool:
         re.search(patron, normalizado)
         for patron in patrones
     )
+
