@@ -292,3 +292,81 @@ td strong {
   }
 }
 
+
+/* VINCULACION DE TELEGRAM */
+
+.telegram-linked {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 20px 0;
+}
+
+.telegram-linked strong {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px;
+}
+
+.telegram-linked p,
+.code-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.telegram-linked a {
+  display: inline-block;
+  margin-top: 6px;
+  text-decoration: none;
+}
+
+.link-code-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 0;
+}
+
+.link-code {
+  margin: 0;
+  padding: 14px 0;
+  color: var(--ink);
+  font-family: 'Space Grotesk', monospace;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: .28em;
+  border-bottom: 1px dashed var(--line);
+}
+
+.countdown {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.countdown.expired {
+  color: var(--red);
+}
+
+.copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.copy-row a {
+  text-decoration: none;
+}
+
+.code-hint code,
+.hint-list code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #eef4fa;
+  color: var(--green);
+  font-size: 11px;
+}

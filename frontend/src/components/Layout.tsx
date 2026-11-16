@@ -11,6 +11,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { to: '/kardex', label: 'Kárdex', icon: '≡' },
     { to: '/alertas', label: 'Alertas', icon: '!' },
     { to: '/reportes', label: 'Reportes', icon: '📊' },
+    { to: '/telegram', label: 'Telegram', icon: '✈' },
     ...(user?.role === 'ADMIN' ? [{ to: '/admin', label: 'Administración', icon: '⚙' }] : []),
   ]
   return <div className="app-shell">

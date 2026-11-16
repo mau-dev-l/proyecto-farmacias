@@ -1,9 +1,19 @@
 ﻿
 import os
+import sys
+import time
 
 import httpx
 
+# La consola de Windows usa cp1252 por defecto y rompe al imprimir
+# caracteres fuera de esa tabla. No perder el bot por un print.
+try:
+    sys.stdout.reconfigure(errors="replace", line_buffering=True)
+except AttributeError:
+    pass
+
 from telegram.ai.agent import responder_documentacion
+from app.core.config import settings
 from app.core.database import SessionLocal
 from app.services.telegram_service import vincular_cuenta_telegram
 from app.services.telegram_inventory_service import (
@@ -37,8 +47,11 @@ TELEGRAM_API_URL = "https://api.telegram.org"
 
 
 def obtener_token() -> str:
-    """Obtiene el token del bot desde una variable de entorno."""
-    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    """Obtiene el token del bot desde el entorno o desde la configuracion."""
+    token = (
+        os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+        or settings.telegram_bot_token.strip()
+    )
 
     if not token:
         raise RuntimeError(
@@ -128,6 +141,15 @@ def procesar_mensaje(mensaje: dict) -> None:
         return
 
     comando = texto.split(maxsplit=1)[0].split("@")[0].lower()
+
+    # Los enlaces profundos (t.me/bot?start=CODIGO) llegan
+    # como "/start CODIGO": se tratan como vinculacion.
+    if comando == "/start":
+        partes_inicio = texto.split(maxsplit=1)
+
+        if len(partes_inicio) == 2 and partes_inicio[1].strip():
+            texto = f"/vincular {partes_inicio[1].strip()}"
+            comando = "/vincular"
 
     # --------------------------------------------------
     # 1. VINCULACION DE CUENTAS
@@ -556,7 +578,7 @@ def procesar_mensaje(mensaje: dict) -> None:
 
                 else:
                     try:
-                        print("Consultando documentación con IA...")
+                        print("Consultando documentacion con IA...")
 
                         respuesta = responder_documentacion(texto)
 
@@ -581,12 +603,23 @@ def procesar_mensaje(mensaje: dict) -> None:
 def iniciar_bot() -> None:
     """Mantiene el bot escuchando mensajes de Telegram."""
 
-    print("🤖 Bot de Telegram iniciado. Esperando mensajes...")
+    print("Bot de Telegram iniciado. Esperando mensajes...")
 
     offset = None
 
     while True:
-        actualizaciones = obtener_actualizaciones(offset)
+        try:
+            actualizaciones = obtener_actualizaciones(offset)
+        except Exception as error:
+            # 409 (otra instancia consultando), cortes de red o
+            # errores de Telegram no deben terminar el proceso.
+            print(
+                "Error al obtener mensajes:",
+                type(error).__name__,
+                "- reintentando en 3 segundos",
+            )
+            time.sleep(3)
+            continue
 
         for actualizacion in actualizaciones:
             offset = actualizacion["update_id"] + 1
@@ -594,7 +627,13 @@ def iniciar_bot() -> None:
             mensaje = actualizacion.get("message")
 
             if mensaje and "text" in mensaje:
-                procesar_mensaje(mensaje)
+                try:
+                    procesar_mensaje(mensaje)
+                except Exception as error:
+                    print(
+                        "Error al procesar mensaje:",
+                        type(error).__name__,
+                    )
 
 
 if __name__ == "__main__":

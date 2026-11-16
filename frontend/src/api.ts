@@ -134,6 +134,17 @@ export type WasteReport = {
   items: WasteItem[]
 }
 
+export type TelegramLinkCode = {
+  codigo: string
+  expira_en: string
+}
+
+export type TelegramLinkStatus = {
+  vinculado: boolean
+  vinculado_en: string | null
+  bot_username: string | null
+}
+
 export type EntryPayload = {
   medicine_id: number
   lot_number: string
@@ -228,4 +239,7 @@ export const api = {
   users: () => request<User[]>('/usuarios'),
   createUser: (payload: { branch_id: number; name: string; email: string; password: string; role: string }) => request<User>('/usuarios', { method: 'POST', body: JSON.stringify(payload) }),
   updateUser: (id: number, payload: Record<string, unknown>) => request<User>(`/usuarios/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+
+  telegramStatus: () => request<TelegramLinkStatus>('/telegram/estado'),
+  telegramCode: () => request<TelegramLinkCode>('/telegram/codigo', { method: 'POST' }),
 }

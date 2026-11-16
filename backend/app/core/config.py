@@ -22,6 +22,17 @@ class Settings(BaseSettings):
         validation_alias="TELEGRAM_LINK_SECRET_KEY",
     )
 
+    # Bot de Telegram: token del proceso bot y usuario publico
+    telegram_bot_token: str = Field(
+        "",
+        validation_alias="TELEGRAM_BOT_TOKEN",
+    )
+
+    telegram_bot_username: str = Field(
+        "",
+        validation_alias="TELEGRAM_BOT_USERNAME",
+    )
+
     jwt_algorithm: str = Field(
         "HS256",
         validation_alias="JWT_ALGORITHM",
