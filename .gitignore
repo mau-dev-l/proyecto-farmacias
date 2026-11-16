@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+*.log
+
+# Virtual environments (not the same thing as a .env file)
+.venv/
+venv/
+env/
+ENV/
+
+# Secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Backups / editor leftovers
+*.bak
+*.orig
+
+# Frontend
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+.vite/
+
+# Tooling
+.codegraph/
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
