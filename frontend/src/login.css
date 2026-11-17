@@ -365,3 +365,96 @@
     font-size: 25px;
   }
 }
+
+/* Iconografia del acceso */
+
+.clinical-logo svg,
+.clinical-symbol svg,
+.clinical-welcome-icon svg,
+.clinical-mobile-logo svg {
+  display: block;
+}
+
+.clinical-logo {
+  color: #dceef9;
+}
+
+.clinical-logo svg {
+  width: 26px;
+  height: 26px;
+}
+
+.clinical-symbol {
+  color: #c7ebff;
+}
+
+.clinical-symbol svg {
+  width: 52px;
+  height: 52px;
+}
+
+.clinical-welcome-icon {
+  color: #174a7e;
+}
+
+.clinical-welcome-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.clinical-logo .brand-mark-cross,
+.clinical-symbol .brand-mark-cross {
+  stroke: #4ecf95;
+}
+
+.clinical-mobile-logo span {
+  display: inline-flex;
+  color: #174a7e;
+}
+
+.clinical-password-wrap input {
+  padding-right: 48px;
+}
+
+.clinical-show-password {
+  top: 13px;
+  right: 12px;
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  border-radius: 6px;
+  color: #6f8ba6;
+}
+
+.clinical-show-password:hover {
+  color: #174a7e;
+}
+
+.clinical-show-password svg {
+  width: 18px;
+  height: 18px;
+}
+
+.clinical-features span {
+  color: #8fe0b7;
+}
+
+.clinical-security span {
+  color: #7f9ab0;
+}
+
+.clinical-submit {
+  gap: 8px;
+}
+
+.clinical-submit .btn-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.clinical-show-password:focus-visible,
+.icon-button:focus-visible,
+.row-menu:focus-visible {
+  outline: 2px solid #367bb5;
+  outline-offset: 2px;
+}

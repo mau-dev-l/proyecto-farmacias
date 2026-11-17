@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type ExpiringLot, type InventoryReport, type KardexEntry, type WasteReport } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Field, Notice, PageHeader, StatusPill, Tabs } from '../components/Ui'
 
 type ReportTab = 'inventario' | 'mermas' | 'proximos-vencer' | 'movimientos'
@@ -41,15 +42,15 @@ export function ReportsPage() {
   }
 
   return <>
-    <PageHeader eyebrow="ANÁLISIS" title="Reportes" description="Indicadores de inventario, pérdidas y movimientos, con exportación CSV." action={<button className="primary-button" onClick={exportCurrent}>Exportar CSV <span>↓</span></button>} />
+    <PageHeader eyebrow="ANÁLISIS" title="Reportes" description="Indicadores de inventario, pérdidas y movimientos, con exportación CSV." action={<button className="primary-button" onClick={exportCurrent}><Icons.download className="btn-icon" aria-hidden="true" />Exportar CSV</button>} />
     <Tabs
       value={tab}
       onChange={setTab}
       options={[
-        { value: 'inventario', label: 'Inventario' },
-        { value: 'mermas', label: 'Mermas' },
-        { value: 'proximos-vencer', label: 'Próximos a vencer' },
-        { value: 'movimientos', label: 'Movimientos' },
+        { value: 'inventario', label: 'Inventario', icon: <Icons.units aria-hidden="true" /> },
+        { value: 'mermas', label: 'Mermas', icon: <Icons.waste aria-hidden="true" /> },
+        { value: 'proximos-vencer', label: 'Próximos a vencer', icon: <Icons.expiring aria-hidden="true" /> },
+        { value: 'movimientos', label: 'Movimientos', icon: <Icons.movement aria-hidden="true" /> },
       ]}
     />
     {error && <Notice>{error}</Notice>}
@@ -64,9 +65,9 @@ export function ReportsPage() {
 
     {loading ? <div className="panel loading-row">Calculando reporte…</div> : <>
       {tab === 'inventario' && <section className="metric-grid">
-        <div className="metric-card green"><span className="metric-mark" /><span className="metric-label">Unidades en stock</span><strong>{inventory.total_units.toLocaleString('es-AR')}</strong><small>todos los lotes activos</small></div>
-        <div className="metric-card blue"><span className="metric-mark" /><span className="metric-label">Valor del inventario</span><strong>$ {Number(inventory.total_value).toLocaleString('es-AR')}</strong><small>costo de adquisición</small></div>
-        <div className="metric-card amber"><span className="metric-mark" /><span className="metric-label">Medicamentos</span><strong>{inventory.medicine_count}</strong><small>con stock disponible</small></div>
+        <div className="metric-card green"><span className="metric-icon"><Icons.units aria-hidden="true" /></span><span className="metric-label">Unidades en stock</span><strong>{inventory.total_units.toLocaleString('es-AR')}</strong><small>todos los lotes activos</small></div>
+        <div className="metric-card blue"><span className="metric-icon"><Icons.value aria-hidden="true" /></span><span className="metric-label">Valor del inventario</span><strong>$ {Number(inventory.total_value).toLocaleString('es-AR')}</strong><small>costo de adquisición</small></div>
+        <div className="metric-card amber"><span className="metric-icon"><Icons.medicineCount aria-hidden="true" /></span><span className="metric-label">Medicamentos</span><strong>{inventory.medicine_count}</strong><small>con stock disponible</small></div>
       </section>}
 
       {tab === 'mermas' && <div className="panel table-panel">

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, type TelegramLinkCode, type TelegramLinkStatus } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Notice, PageHeader, StatusPill } from '../components/Ui'
 
 function formatDate(value: string): string {
@@ -79,7 +80,7 @@ export function TelegramPage() {
       eyebrow="ASISTENTE"
       title="Telegram"
       description="Vinculá tu cuenta para consultar existencias y caducidades desde el bot."
-      action={status?.vinculado ? undefined : <button className="primary-button" onClick={generate} disabled={generating}>{generating ? 'Generando…' : 'Generar código'}</button>}
+      action={status?.vinculado ? undefined : <button className="primary-button" onClick={generate} disabled={generating}><Icons.code className="btn-icon" aria-hidden="true" />{generating ? 'Generando…' : 'Generar código'}</button>}
     />
     {error && <Notice>{error}</Notice>}
 
@@ -93,7 +94,7 @@ export function TelegramPage() {
         {status?.vinculado ? <div className="telegram-linked">
           <strong>Tu cuenta ya está vinculada</strong>
           <p>Desde {status.vinculado_en ? formatDate(status.vinculado_en) : 'este chat'} podés escribirle al bot y consultar el inventario de tu sucursal.</p>
-          {status.bot_username && <a className="primary-button" href={`https://t.me/${status.bot_username}`} target="_blank" rel="noreferrer">Abrir Telegram</a>}
+          {status.bot_username && <a className="primary-button" href={`https://t.me/${status.bot_username}`} target="_blank" rel="noreferrer"><Icons.telegram className="btn-icon" aria-hidden="true" />Abrir Telegram</a>}
         </div> : <>
           {!code && <EmptyState title="Todavía no generaste un código" message="Generá un código de un solo uso y enviálo al bot en un chat privado." />}
 
@@ -101,12 +102,13 @@ export function TelegramPage() {
             <span className="eyebrow">CÓDIGO DE VINCULACIÓN</span>
             <p className="link-code" aria-live="polite">{code.codigo}</p>
             <p className={expired ? 'countdown expired' : 'countdown'}>
+              <Icons.hourglass aria-hidden="true" />
               {expired ? 'Código vencido, generá uno nuevo' : `Vence en ${minutes}:${seconds}`}
             </p>
             <div className="copy-row">
-              <button className="secondary-button" onClick={() => copy(command)}>{copied ? 'Copiado' : 'Copiar comando'}</button>
-              <button className="secondary-button" onClick={generate} disabled={generating}>{generating ? 'Generando…' : 'Generar otro código'}</button>
-              {deepLink && !expired && <a className="primary-button" href={deepLink} target="_blank" rel="noreferrer">Abrir el bot</a>}
+              <button className="secondary-button" onClick={() => copy(command)}>{copied ? <Icons.copied className="btn-icon" aria-hidden="true" /> : <Icons.copy className="btn-icon" aria-hidden="true" />}{copied ? 'Copiado' : 'Copiar comando'}</button>
+              <button className="secondary-button" onClick={generate} disabled={generating}><Icons.code className="btn-icon" aria-hidden="true" />{generating ? 'Generando…' : 'Generar otro código'}</button>
+              {deepLink && !expired && <a className="primary-button" href={deepLink} target="_blank" rel="noreferrer"><Icons.telegram className="btn-icon" aria-hidden="true" />Abrir el bot</a>}
             </div>
             <p className="code-hint">Abrí Telegram, entrá al chat privado con {status?.bot_username ? `@${status.bot_username}` : 'el bot'} y enviá <code>{command}</code>.</p>
           </div>}

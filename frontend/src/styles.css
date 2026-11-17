@@ -370,3 +370,247 @@ td strong {
   color: var(--green);
   font-size: 11px;
 }
+
+/* ============================================================
+   SISTEMA DE ICONOGRAFIA
+   Tamanos fijos: 16 (botones), 18 (nav), 20 (acciones), 34 (KPI).
+   currentColor mantiene los estados activo/hover sin reglas extra.
+   ============================================================ */
+
+:root {
+  --pharmacy: #2f8f5b;
+}
+
+.brand-mark svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.brand-mark-cross {
+  stroke: var(--pharmacy);
+}
+
+.nav-icon {
+  display: grid;
+  width: 18px;
+  place-items: center;
+  color: inherit;
+  font-size: 0;
+}
+
+.nav-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.logout-icon {
+  display: flex;
+  align-items: center;
+}
+
+.logout-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.brand-mark.large svg {
+  width: 26px;
+  height: 26px;
+}
+
+/* Botones: un icono a la izquierda del texto, alineado por flex. */
+.primary-button,
+.secondary-button,
+.danger-button,
+.filter-button,
+.text-button,
+.clinical-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.primary-button span,
+.filter-button span {
+  margin-left: 0;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.btn-icon.lg {
+  width: 18px;
+  height: 18px;
+}
+
+.metric-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  place-items: center;
+  background: #e8f1fb;
+  color: #174a7e;
+}
+
+.metric-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.metric-card.blue .metric-icon {
+  background: #e6f1fa;
+  color: #367bb5;
+}
+
+.metric-card.amber .metric-icon {
+  background: #fdf0d8;
+  color: #b0781f;
+}
+
+.metric-card.red .metric-icon {
+  background: #fbe6e3;
+  color: #b9544c;
+}
+
+.alert-symbol svg {
+  width: 15px;
+  height: 15px;
+}
+
+.arrow {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.quick-actions .quick-icon {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  color: #174a7e;
+}
+
+.quick-icon svg {
+  width: 21px;
+  height: 21px;
+}
+
+.toolbar .search-field svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+}
+
+.row-menu {
+  display: inline-grid;
+  place-items: center;
+}
+
+.row-menu svg {
+  width: 15px;
+  height: 15px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.status-pill svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+}
+
+.empty-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.notice svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+}
+
+.icon-button {
+  display: grid;
+  place-items: center;
+}
+
+.icon-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tab svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.clinical-features span svg {
+  width: 14px;
+  height: 14px;
+}
+
+.clinical-security span {
+  display: inline-flex;
+}
+
+.clinical-security span svg {
+  width: 13px;
+  height: 13px;
+}
+
+@media (max-width: 680px) {
+  .nav-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.countdown svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+}
+
+.link-code-card .primary-button,
+.link-code-card .secondary-button {
+  text-decoration: none;
+}

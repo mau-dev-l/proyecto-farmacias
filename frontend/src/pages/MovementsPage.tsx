@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api, type Lot, type Medicine, type SuggestedLot } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Field, Notice, PageHeader, StatusPill, Tabs } from '../components/Ui'
 
 type Mode = 'ENTRADA' | 'SALIDA_VENTA' | 'SALIDA_MERMA'
@@ -101,6 +102,7 @@ export function MovementsPage() {
 
   const manualLot = lots.find(lot => lot.id === Number(lotId))
   const needsReason = isSale && Boolean(lotId) && suggestion.length > 0 && suggestion[0].lot_id !== Number(lotId)
+  const SubmitIcon = mode === 'ENTRADA' ? Icons.entry : mode === 'SALIDA_MERMA' ? Icons.waste : Icons.sale
 
   return <>
     <PageHeader eyebrow="MOVIMIENTOS" title="Entradas y salidas" description="Registrá compras, ventas y mermas con trazabilidad por lote." />
@@ -108,9 +110,9 @@ export function MovementsPage() {
       value={mode}
       onChange={value => { setMode(value); setError(''); setSuccess(''); reset() }}
       options={[
-        { value: 'ENTRADA', label: 'Registrar entrada' },
-        { value: 'SALIDA_VENTA', label: 'Registrar venta' },
-        { value: 'SALIDA_MERMA', label: 'Registrar merma' },
+        { value: 'ENTRADA', label: 'Registrar entrada', icon: <Icons.entry aria-hidden="true" /> },
+        { value: 'SALIDA_VENTA', label: 'Registrar venta', icon: <Icons.sale aria-hidden="true" /> },
+        { value: 'SALIDA_MERMA', label: 'Registrar merma', icon: <Icons.waste aria-hidden="true" /> },
       ]}
     />
     {error && <Notice>{error}</Notice>}
@@ -154,12 +156,12 @@ export function MovementsPage() {
           </Field>
 
           {isSale && <div className="span-2 inline-actions">
-            <button type="button" className="secondary-button" onClick={calculatePeps}>Calcular PEPS</button>
+            <button type="button" className="secondary-button" onClick={calculatePeps}><Icons.calculate className="btn-icon" aria-hidden="true" />Calcular PEPS</button>
             <span className="toolbar-note">Sugerencia de lotes por fecha de caducidad más próxima.</span>
           </div>}
 
           <div className="span-2 form-actions">
-            <button className="primary-button" disabled={saving}>{saving ? 'Guardando…' : mode === 'ENTRADA' ? 'Registrar entrada' : mode === 'SALIDA_MERMA' ? 'Registrar merma' : 'Registrar venta'}</button>
+            <button className="primary-button" disabled={saving}><SubmitIcon className="btn-icon" aria-hidden="true" />{saving ? 'Guardando…' : mode === 'ENTRADA' ? 'Registrar entrada' : mode === 'SALIDA_MERMA' ? 'Registrar merma' : 'Registrar venta'}</button>
           </div>
         </div>
       </form>

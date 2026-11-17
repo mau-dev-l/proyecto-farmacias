@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Medicine } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Field, Modal, Notice, PageHeader, StatusPill } from '../components/Ui'
 
 const emptyForm = { barcode: '', name: '', active_ingredient: '', presentation: '', sale_price: '', minimum_stock: '0' }
@@ -79,10 +80,10 @@ export function MedicinesPage() {
   }
 
   return <>
-    <PageHeader eyebrow="CATÁLOGO" title="Medicamentos" description="Mantené el catálogo limpio y listo para operar." action={<button className="primary-button" onClick={openNew}>+ Nuevo medicamento</button>} />
+    <PageHeader eyebrow="CATÁLOGO" title="Medicamentos" description="Mantené el catálogo limpio y listo para operar." action={<button className="primary-button" onClick={openNew}><Icons.plus className="btn-icon" aria-hidden="true" />Nuevo medicamento</button>} />
     {error && <Notice>{error}</Notice>}
     {success && <Notice tone="success">{success}</Notice>}
-    <div className="toolbar"><label className="search-field"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar medicamento…" /></label><span className="toolbar-note">{items.length} activos</span></div>
+    <div className="toolbar"><label className="search-field"><Icons.search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar medicamento…" /></label><span className="toolbar-note">{items.length} activos</span></div>
     <div className="panel table-panel">
       <div className="table-heading"><div><h2>Catálogo activo</h2><span>Datos comerciales y de venta</span></div></div>
       {items.length === 0 ? <EmptyState title="Catálogo vacío" message="Cuando conectes la API, tus medicamentos aparecerán aquí." /> : <div className="table-scroll"><table><thead><tr><th>Medicamento</th><th>Código de barras</th><th>Presentación</th><th>Precio de venta</th><th>Stock mínimo</th><th>Estado</th><th /></tr></thead><tbody>{items.map(item => <tr key={item.id}>
@@ -92,7 +93,7 @@ export function MedicinesPage() {
         <td>$ {Number(item.sale_price).toLocaleString('es-AR')}</td>
         <td>{item.minimum_stock} u.</td>
         <td><StatusPill tone={item.active ? 'success' : 'danger'}>{item.active ? 'Activo' : 'Inactivo'}</StatusPill></td>
-        <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEdit(item)}>Editar</button><button className="danger-button" onClick={() => deactivate(item)}>Desactivar</button></div></td>
+        <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEdit(item)}><Icons.edit className="btn-icon" aria-hidden="true" />Editar</button><button className="danger-button" onClick={() => deactivate(item)}><Icons.deactivate className="btn-icon" aria-hidden="true" />Desactivar</button></div></td>
       </tr>)}</tbody></table></div>}
     </div>
 
@@ -106,7 +107,7 @@ export function MedicinesPage() {
           <Field label="Precio de venta"><input type="number" min="0" step="0.01" value={form.sale_price} onChange={event => setForm({ ...form, sale_price: event.target.value })} required /></Field>
           <Field label="Stock mínimo"><input type="number" min="0" value={form.minimum_stock} onChange={event => setForm({ ...form, minimum_stock: event.target.value })} required /></Field>
         </div>
-        <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setModalOpen(false)}>Cancelar</button><button className="primary-button" disabled={saving}>{saving ? 'Guardando…' : 'Guardar'}</button></div>
+        <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setModalOpen(false)}><Icons.close className="btn-icon" aria-hidden="true" />Cancelar</button><button className="primary-button" disabled={saving}><Icons.check className="btn-icon" aria-hidden="true" />{saving ? 'Guardando…' : 'Guardar'}</button></div>
       </form>
     </Modal>
   </>
