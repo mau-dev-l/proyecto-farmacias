@@ -142,7 +142,7 @@ export function AdminPage() {
         <tbody>{users.map(user => <tr key={user.id}>
           <td><strong>{user.name}</strong></td>
           <td className="mono">{user.email}</td>
-          <td><StatusPill tone={user.role === 'ADMIN' ? 'warning' : 'neutral'}>{user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}</StatusPill></td>
+          <td><StatusPill tone={user.role === 'ADMIN' ? 'warning' : 'neutral'} icon={null}>{user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}</StatusPill></td>
           <td>{branchName(user.branch_id)}</td>
           <td><StatusPill tone={user.active ? 'success' : 'danger'}>{user.active ? 'Activo' : 'Inactivo'}</StatusPill></td>
           <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEditUser(user)}><Icons.edit className="btn-icon" aria-hidden="true" />Editar</button><button className="danger-button" onClick={() => toggleUser(user)}>{user.active ? <Icons.deactivate className="btn-icon" aria-hidden="true" /> : <Icons.activate className="btn-icon" aria-hidden="true" />}{user.active ? 'Desactivar' : 'Activar'}</button></div></td>

@@ -596,6 +596,27 @@ td strong {
     width: 20px;
     height: 20px;
   }
+
+  .header-actions {
+    width: 100%;
+  }
+
+  .header-actions > * {
+    flex: 1;
+  }
+}
+
+/* Data cells keep short values such as "3 u." on one line; the wrapper
+   already scrolls horizontally when the table needs more room. */
+.table-scroll th,
+.table-scroll td {
+  white-space: nowrap;
+}
+
+/* `td strong` is a block by default, which stacks the unit under the number.
+   Inside a data cell the value and its unit belong on the same line. */
+.table-scroll td strong {
+  display: inline;
 }
 
 .countdown {

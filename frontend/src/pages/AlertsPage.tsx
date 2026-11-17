@@ -74,7 +74,7 @@ export function AlertsPage() {
             <strong>{labels[alert.alert_type]} · {alert.medicine_name}</strong>
             <p>Lote {alert.lot_number} · vence {alert.expiration_date} · {alert.quantity} u. restantes · {alert.days_remaining} días{alert.threshold_days ? ` · umbral ${alert.threshold_days} días` : ''}</p>
           </div>
-          <StatusPill tone={alert.alert_type === 'VENCIDO' ? 'danger' : alert.alert_type === 'STOCK_MINIMO' ? 'warning' : 'warning'}>{labels[alert.alert_type]}</StatusPill>
+          <StatusPill tone={alert.alert_type === 'VENCIDO' ? 'danger' : alert.alert_type === 'STOCK_MINIMO' ? 'warning' : 'warning'} icon={null}>{labels[alert.alert_type]}</StatusPill>
           <button className="secondary-button" onClick={() => markRead(alert.id)}><Icons.check className="btn-icon" aria-hidden="true" />Marcar leída</button>
         </div>)}</div>}
       </div>

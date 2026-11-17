@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { api, type ExpiringLot, type InventoryReport, type KardexEntry, type WasteReport } from '../api'
+import { api, MOVEMENT_LABELS, type ExpiringLot, type InventoryReport, type KardexEntry, type WasteReport } from '../api'
 import { Icons } from '../components/icons'
 import { EmptyState, Field, Notice, PageHeader, StatusPill, Tabs } from '../components/Ui'
 
@@ -82,7 +82,7 @@ export function ReportsPage() {
 
       {tab === 'movimientos' && <div className="panel table-panel">
         <div className="table-heading"><div><h2>Movimientos del período</h2><span>{movements.length} registros</span></div></div>
-        {movements.length === 0 ? <EmptyState title="Sin movimientos" message="No hay movimientos en el rango elegido." /> : <div className="table-scroll"><table><thead><tr><th>Fecha</th><th>Lote</th><th>Usuario</th><th>Tipo</th><th>Cantidad</th><th>Saldo</th></tr></thead><tbody>{movements.map(item => <tr key={item.id}><td>{new Date(item.created_at).toLocaleString('es-AR')}</td><td className="mono">{item.lot_number}</td><td>{item.user_name}</td><td>{item.movement_type}</td><td>{item.quantity} u.</td><td>{item.lot_balance} u.</td></tr>)}</tbody></table></div>}
+        {movements.length === 0 ? <EmptyState title="Sin movimientos" message="No hay movimientos en el rango elegido." /> : <div className="table-scroll"><table><thead><tr><th>Fecha</th><th>Lote</th><th>Usuario</th><th>Tipo</th><th>Cantidad</th><th>Saldo</th></tr></thead><tbody>{movements.map(item => <tr key={item.id}><td>{new Date(item.created_at).toLocaleString('es-AR')}</td><td className="mono">{item.lot_number}</td><td>{item.user_name}</td><td>{MOVEMENT_LABELS[item.movement_type]}</td><td>{item.quantity} u.</td><td>{item.lot_balance} u.</td></tr>)}</tbody></table></div>}
       </div>}
     </>}
   </>

@@ -93,6 +93,14 @@ export type KardexEntry = Movement & {
   user_name: string
 }
 
+/** Human labels for the movement enum, shared by the kardex and the reports. */
+export const MOVEMENT_LABELS: Record<Movement['movement_type'], string> = {
+  ENTRADA: 'Entrada',
+  SALIDA_VENTA: 'Venta',
+  SALIDA_MERMA: 'Merma',
+  AJUSTE: 'Ajuste',
+}
+
 export type SuggestedLot = {
   lot_id: number
   lot_number: string

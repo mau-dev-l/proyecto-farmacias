@@ -4,9 +4,10 @@ export function PageHeader({ eyebrow, title, description, action }: { eyebrow: s
   return <header className="page-header"><div><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{description && <p>{description}</p>}</div>{action}</header>
 }
 
-export function StatusPill({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'warning' | 'danger' | 'success' }) {
-  const icon = tone === 'success' ? <Icons.success aria-hidden="true" /> : tone === 'warning' ? <Icons.warning aria-hidden="true" /> : tone === 'danger' ? <Icons.danger aria-hidden="true" /> : null
-  return <span className={`status-pill ${tone}`}>{icon}{children}</span>
+export function StatusPill({ children, tone = 'neutral', icon }: { children: React.ReactNode; tone?: 'neutral' | 'warning' | 'danger' | 'success'; icon?: React.ReactNode | null }) {
+  const fallback = tone === 'success' ? <Icons.success aria-hidden="true" /> : tone === 'warning' ? <Icons.warning aria-hidden="true" /> : tone === 'danger' ? <Icons.danger aria-hidden="true" /> : null
+  const glyph = icon === undefined ? fallback : icon
+  return <span className={`status-pill ${tone}`}>{glyph}{children}</span>
 }
 
 export function EmptyState({ title, message }: { title: string; message: string }) { return <div className="empty-state"><span className="empty-icon"><Icons.empty aria-hidden="true" /></span><strong>{title}</strong><p>{message}</p></div> }
