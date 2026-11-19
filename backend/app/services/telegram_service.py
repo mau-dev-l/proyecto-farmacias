@@ -27,6 +27,14 @@ class CodigoVinculacionCreado:
 
 
 @dataclass(frozen=True)
+class EstadoVinculacion:
+    """Estado del vinculo entre un usuario y un chat de Telegram."""
+
+    vinculado: bool
+    vinculado_en: datetime | None = None
+
+
+@dataclass(frozen=True)
 class ResultadoVinculacionTelegram:
     """
     Resultado de un intento de vincular Telegram.
@@ -550,3 +558,26 @@ def vincular_cuenta_telegram(
     except Exception:
         db.rollback()
         raise
+
+
+def obtener_estado_vinculacion(
+    db: Session,
+    usuario: User,
+) -> EstadoVinculacion:
+    """
+    Indica si el usuario ya tiene un chat de Telegram vinculado.
+    """
+
+    vinculo = (
+        db.query(TelegramLink)
+        .filter(TelegramLink.user_id == usuario.id)
+        .first()
+    )
+
+    if vinculo is None:
+        return EstadoVinculacion(vinculado=False)
+
+    return EstadoVinculacion(
+        vinculado=True,
+        vinculado_en=vinculo.linked_at,
+    )

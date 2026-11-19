@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Fragment } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, type InventoryItem } from '../api'
-import { EmptyState, PageHeader, StatusPill } from '../components/Ui'
+import { Icons } from '../components/icons'
+import { EmptyState, Notice, PageHeader, StatusPill } from '../components/Ui'
 
 export function InventoryPage() {
   const navigate = useNavigate()
@@ -23,9 +24,9 @@ export function InventoryPage() {
   }
 
   return <>
-    <PageHeader eyebrow="CONTROL DE EXISTENCIAS" title="Inventario" description="Una lectura por medicamento de todo lo que está disponible." action={<><button className="secondary-button" onClick={exportCsv}>Exportar CSV ↓</button><button className="primary-button" onClick={() => navigate('/movimientos')}>+ Registrar entrada</button></>} />
-    {error && <div className="notice danger">{error}</div>}
-    <div className="toolbar"><label className="search-field"><span>⌕</span><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar por nombre o código…" /></label><span className="toolbar-note">{items.length} medicamentos encontrados</span></div>
+    <PageHeader eyebrow="CONTROL DE EXISTENCIAS" title="Inventario" description="Una lectura por medicamento de todo lo que está disponible." action={<div className="header-actions"><button className="secondary-button" onClick={exportCsv}><Icons.download className="btn-icon" aria-hidden="true" />Exportar CSV</button><button className="primary-button" onClick={() => navigate('/movimientos')}><Icons.plus className="btn-icon" aria-hidden="true" />Registrar entrada</button></div>} />
+    {error && <Notice>{error}</Notice>}
+    <div className="toolbar"><label className="search-field"><Icons.search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar por nombre o código…" /></label><span className="toolbar-note">{items.length} medicamentos encontrados</span></div>
     <div className="panel table-panel">
       <div className="table-heading"><div><h2>Existencias actuales</h2><span>Stock total y desglose por lote</span></div></div>
       {loading ? <div className="loading-row">Cargando existencias…</div> : items.length === 0 ? <EmptyState title="No hay medicamentos" message="Probá con otra búsqueda o agregá un medicamento al catálogo." /> : <div className="table-scroll"><table><thead><tr><th>Medicamento</th><th>Código</th><th>Stock actual</th><th>Stock mínimo</th><th>Estado</th><th /></tr></thead><tbody>{items.map(item => {
@@ -38,7 +39,7 @@ export function InventoryPage() {
             <td><strong>{item.total_stock}</strong> unidades</td>
             <td>{item.minimum_stock} unidades</td>
             <td><StatusPill tone={low ? 'danger' : 'success'}>{low ? 'Stock bajo' : 'En rango'}</StatusPill></td>
-            <td><button className="row-menu" onClick={() => setExpanded(open ? null : item.medicine_id)}>{open ? '▴' : '▾'}</button></td>
+            <td><button className="row-menu" onClick={() => setExpanded(open ? null : item.medicine_id)} aria-expanded={open} aria-label={open ? 'Ocultar lotes' : 'Ver lotes'}>{open ? <Icons.chevronUp aria-hidden="true" /> : <Icons.chevronDown aria-hidden="true" />}</button></td>
           </tr>
           {open && item.lots.map(lot => <tr key={`${item.medicine_id}-${lot.id}`} className="detail-row"><td colSpan={6}><div className="inline-actions" style={{ justifyContent: 'space-between' }}><span className="mono">{lot.lot_number}</span><span>Vence {lot.expiration_date}</span><span>{lot.current_quantity} u. · {lot.status}</span></div></td></tr>)}
         </Fragment>

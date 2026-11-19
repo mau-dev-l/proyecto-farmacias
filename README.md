@@ -2,7 +2,7 @@
 
 Incremental implementation of a pharmacy inventory system with batch-level expiration control, PEPS/FEFO stock rotation, alerts, and reports.
 
-The backend is complete for use cases CU-01 through CU-13. Telegram, LLM, LangChain, and RAG integration (CU-14 through CU-16) is intentionally deferred and currently returns `501 Not Implemented`.
+The backend is complete for use cases CU-01 through CU-13. Telegram account linking (CU-14) is implemented for both the web panel and the bot process; the LLM/RAG parts (CU-15 and CU-16) are still in progress.
 
 ## Stack
 
@@ -85,6 +85,37 @@ npm run dev
 
 The development server runs on `http://localhost:5173` and calls the API at `http://localhost:8000/api/v1` by default. Override it with `VITE_API_URL`.
 
+The **Telegram** screen (`/telegram`) generates the one-time link code and shows the bot username returned by the API.
+
+## Telegram bot
+
+The bot is a separate process that reads the same database:
+
+```bash
+cd backend
+.venv\Scripts\activate
+python -m telegram.bot
+```
+
+It requires these keys in `backend/.env`:
+
+| Key | Purpose |
+| --- | --- |
+| `TELEGRAM_BOT_TOKEN` | Token issued by BotFather |
+| `TELEGRAM_BOT_USERNAME` | Public bot username, shown by the web panel (no `@`) |
+| `TELEGRAM_LINK_SECRET_KEY` | Server-only key used to hash link codes |
+
+Linking flow (CU-14):
+
+1. The user signs in and opens `/telegram`.
+2. The panel calls `POST /api/v1/telegram/codigo` and shows a 10-character code valid for 10 minutes.
+3. The user sends `/vincular CODIGO` (or opens the deep link, which arrives as `/start CODIGO`) in a private chat with the bot.
+4. The bot validates the code, stores the `chat_id`, and the code stops working.
+
+Only the HMAC of each code is stored. Five failed attempts lock that chat for 15 minutes.
+
+Bot commands that work without the LLM: `/vincular`, `/stock NOMBRE`, and the expiration and last-movement queries. Free-form questions and RAG need Ollama running with `llama3.2:3b` on `http://localhost:11434`.
+
 ## Implemented use cases
 
 | Use case | Behavior |
@@ -102,6 +133,7 @@ The development server runs on `http://localhost:5173` and calls the API at `htt
 | CU-11 | Idempotent alerts job that also marks expired lots |
 | CU-12 | Alerts enriched with medicine, lot, expiration, and quantity |
 | CU-13 | Inventory, waste, expiring, and movement reports plus CSV export |
+| CU-14 | Telegram linking: one-time code from the web panel, `/vincular CODIGO` in the bot, single-use and 10-minute expiry |
 
 ## Alerts job
 
@@ -117,4 +149,5 @@ It creates expiration alerts without duplicating existing ones, marks expired ba
 
 - The Docker daemon was unavailable during development, so live PostgreSQL integration has not been executed yet. All behavior is verified with SQLite.
 - Alembic is deferred while `db.sql` remains the schema baseline. Add a baseline revision once the live database is reachable.
-- Telegram, LLM, and RAG endpoints return `501` by design.
+- `/api/v1/bot/consulta` and `/api/v1/telegram/vincular` still return `501`: the bot process talks to the services directly instead of going through those HTTP endpoints.
+- The LLM/RAG flow (CU-15 and CU-16) requires Ollama with `llama3.2:3b`; without it, free-form questions fail while the deterministic bot commands keep working.

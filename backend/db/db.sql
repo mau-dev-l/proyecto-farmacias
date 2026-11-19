@@ -111,9 +111,16 @@ CREATE TABLE IF NOT EXISTS telegram_vinculos (
 CREATE TABLE IF NOT EXISTS codigos_vinculacion (
   id SERIAL PRIMARY KEY,
   usuario_id INT NOT NULL REFERENCES usuarios(id),
-  codigo VARCHAR(10) NOT NULL UNIQUE,
+  codigo VARCHAR(64) NOT NULL UNIQUE,
   expira_en TIMESTAMPTZ NOT NULL,
   usado BOOLEAN NOT NULL DEFAULT FALSE
+);
+
+CREATE TABLE IF NOT EXISTS telegram_intentos_vinculacion (
+  chat_id BIGINT PRIMARY KEY,
+  intentos INT NOT NULL DEFAULT 0,
+  ventana_inicio TIMESTAMPTZ NOT NULL DEFAULT now(),
+  bloqueado_hasta TIMESTAMPTZ
 );
 
 CREATE TABLE IF NOT EXISTS documentos_rag (

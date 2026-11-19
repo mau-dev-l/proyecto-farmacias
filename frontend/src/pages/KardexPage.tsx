@@ -1,13 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { api, type KardexEntry, type Lot, type Medicine } from '../api'
+import { api, MOVEMENT_LABELS, type KardexEntry, type Lot, type Medicine } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Field, Notice, PageHeader, StatusPill } from '../components/Ui'
 
-const typeLabels: Record<KardexEntry['movement_type'], string> = {
-  ENTRADA: 'Entrada',
-  SALIDA_VENTA: 'Venta',
-  SALIDA_MERMA: 'Merma',
-  AJUSTE: 'Ajuste',
-}
 
 export function KardexPage() {
   const [medicines, setMedicines] = useState<Medicine[]>([])
@@ -77,7 +72,7 @@ export function KardexPage() {
           <td>{new Date(entry.created_at).toLocaleString('es-AR')}</td>
           <td className="mono">{entry.lot_number}</td>
           <td>{entry.user_name}</td>
-          <td><StatusPill tone={entry.movement_type === 'ENTRADA' ? 'success' : entry.movement_type === 'SALIDA_MERMA' ? 'danger' : 'warning'}>{typeLabels[entry.movement_type]}</StatusPill></td>
+          <td><StatusPill tone={entry.movement_type === 'ENTRADA' ? 'success' : entry.movement_type === 'SALIDA_MERMA' ? 'danger' : 'warning'} icon={entry.movement_type === 'ENTRADA' ? <Icons.entry aria-hidden="true" /> : entry.movement_type === 'SALIDA_MERMA' ? <Icons.waste aria-hidden="true" /> : <Icons.sale aria-hidden="true" />}>{MOVEMENT_LABELS[entry.movement_type]}</StatusPill></td>
           <td><strong>{entry.quantity}</strong> u.</td>
           <td>{entry.lot_balance} u.</td>
           <td>$ {Number(entry.unit_cost).toLocaleString('es-AR')}</td>

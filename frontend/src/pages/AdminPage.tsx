@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Branch, type User } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Field, Modal, Notice, PageHeader, StatusPill, Tabs } from '../components/Ui'
 
 type AdminTab = 'usuarios' | 'sucursales'
@@ -130,32 +131,32 @@ export function AdminPage() {
 
   return <>
     <PageHeader eyebrow="ADMINISTRACIÓN" title="Usuarios y sucursales" description="Gestioná el acceso del equipo y la estructura de la farmacia." />
-    <Tabs value={tab} onChange={setTab} options={[{ value: 'usuarios', label: 'Usuarios' }, { value: 'sucursales', label: 'Sucursales' }]} />
+    <Tabs value={tab} onChange={setTab} options={[{ value: 'usuarios', label: 'Usuarios', icon: <Icons.team aria-hidden="true" /> }, { value: 'sucursales', label: 'Sucursales', icon: <Icons.branch aria-hidden="true" /> }]} />
     {error && <Notice>{error}</Notice>}
     {success && <Notice tone="success">{success}</Notice>}
 
     {tab === 'usuarios' ? <div className="panel table-panel">
-      <div className="table-heading"><div><h2>Equipo</h2><span>{users.length} usuarios</span></div><button className="primary-button" onClick={openNewUser}>+ Nuevo usuario</button></div>
+      <div className="table-heading"><div><h2>Equipo</h2><span>{users.length} usuarios</span></div><button className="primary-button" onClick={openNewUser}><Icons.plus className="btn-icon" aria-hidden="true" />Nuevo usuario</button></div>
       {users.length === 0 ? <EmptyState title="Sin usuarios" message="Creá el primer usuario para operar el sistema." /> : <div className="table-scroll"><table>
         <thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Sucursal</th><th>Estado</th><th /></tr></thead>
         <tbody>{users.map(user => <tr key={user.id}>
           <td><strong>{user.name}</strong></td>
           <td className="mono">{user.email}</td>
-          <td><StatusPill tone={user.role === 'ADMIN' ? 'warning' : 'neutral'}>{user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}</StatusPill></td>
+          <td><StatusPill tone={user.role === 'ADMIN' ? 'warning' : 'neutral'} icon={null}>{user.role === 'ADMIN' ? 'Administrador' : 'Empleado'}</StatusPill></td>
           <td>{branchName(user.branch_id)}</td>
           <td><StatusPill tone={user.active ? 'success' : 'danger'}>{user.active ? 'Activo' : 'Inactivo'}</StatusPill></td>
-          <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEditUser(user)}>Editar</button><button className="danger-button" onClick={() => toggleUser(user)}>{user.active ? 'Desactivar' : 'Activar'}</button></div></td>
+          <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEditUser(user)}><Icons.edit className="btn-icon" aria-hidden="true" />Editar</button><button className="danger-button" onClick={() => toggleUser(user)}>{user.active ? <Icons.deactivate className="btn-icon" aria-hidden="true" /> : <Icons.activate className="btn-icon" aria-hidden="true" />}{user.active ? 'Desactivar' : 'Activar'}</button></div></td>
         </tr>)}</tbody>
       </table></div>}
     </div> : <div className="panel table-panel">
-      <div className="table-heading"><div><h2>Sucursales</h2><span>{branches.length} sucursales</span></div><button className="primary-button" onClick={openNewBranch}>+ Nueva sucursal</button></div>
+      <div className="table-heading"><div><h2>Sucursales</h2><span>{branches.length} sucursales</span></div><button className="primary-button" onClick={openNewBranch}><Icons.plus className="btn-icon" aria-hidden="true" />Nueva sucursal</button></div>
       {branches.length === 0 ? <EmptyState title="Sin sucursales" message="Creá la primera sucursal para asignar usuarios." /> : <div className="table-scroll"><table>
         <thead><tr><th>Nombre</th><th>Dirección</th><th>Estado</th><th /></tr></thead>
         <tbody>{branches.map(branch => <tr key={branch.id}>
           <td><strong>{branch.name}</strong></td>
           <td>{branch.address || '—'}</td>
           <td><StatusPill tone={branch.active ? 'success' : 'danger'}>{branch.active ? 'Activa' : 'Inactiva'}</StatusPill></td>
-          <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEditBranch(branch)}>Editar</button><button className="danger-button" onClick={() => toggleBranch(branch)}>{branch.active ? 'Desactivar' : 'Activar'}</button></div></td>
+          <td><div className="inline-actions"><button className="secondary-button" onClick={() => openEditBranch(branch)}><Icons.edit className="btn-icon" aria-hidden="true" />Editar</button><button className="danger-button" onClick={() => toggleBranch(branch)}>{branch.active ? <Icons.deactivate className="btn-icon" aria-hidden="true" /> : <Icons.activate className="btn-icon" aria-hidden="true" />}{branch.active ? 'Desactivar' : 'Activar'}</button></div></td>
         </tr>)}</tbody>
       </table></div>}
     </div>}
@@ -171,7 +172,7 @@ export function AdminPage() {
           <Field label="Rol"><select value={userForm.role} onChange={event => setUserForm({ ...userForm, role: event.target.value })}><option value="EMPLEADO">Empleado</option><option value="ADMIN">Administrador</option></select></Field>
           <Field label="Sucursal" hint="No podés quitarte tu propio rol de administrador."><select value={userForm.branch_id} onChange={event => setUserForm({ ...userForm, branch_id: event.target.value })} required>{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></Field>
         </div>
-        <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setUserModal(false)}>Cancelar</button><button className="primary-button">Guardar</button></div>
+        <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setUserModal(false)}><Icons.close className="btn-icon" aria-hidden="true" />Cancelar</button><button className="primary-button"><Icons.check className="btn-icon" aria-hidden="true" />Guardar</button></div>
       </form>
     </Modal>
 
@@ -181,7 +182,7 @@ export function AdminPage() {
           <Field label="Nombre"><input value={branchForm.name} onChange={event => setBranchForm({ ...branchForm, name: event.target.value })} required /></Field>
           <Field label="Dirección"><input value={branchForm.address} onChange={event => setBranchForm({ ...branchForm, address: event.target.value })} /></Field>
         </div>
-        <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setBranchModal(false)}>Cancelar</button><button className="primary-button">Guardar</button></div>
+        <div className="form-actions"><button type="button" className="secondary-button" onClick={() => setBranchModal(false)}><Icons.close className="btn-icon" aria-hidden="true" />Cancelar</button><button className="primary-button"><Icons.check className="btn-icon" aria-hidden="true" />Guardar</button></div>
       </form>
     </Modal>
   </>

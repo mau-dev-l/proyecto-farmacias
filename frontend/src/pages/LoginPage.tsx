@@ -2,6 +2,8 @@
 import { FormEvent, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../auth'
+import { BrandMark } from '../components/BrandMark'
+import { Icons } from '../components/icons'
 import '../login.css'
 
 export function LoginPage() {
@@ -36,7 +38,7 @@ export function LoginPage() {
     <div className="clinical-login">
       <section className="clinical-hero">
         <div className="clinical-brand">
-          <span className="clinical-logo">✚</span>
+          <span className="clinical-logo"><BrandMark size={26} /></span>
           <div>
             <strong>FARMACIAS</strong>
             <small>Gestión inteligente</small>
@@ -44,7 +46,7 @@ export function LoginPage() {
         </div>
 
         <div className="clinical-hero-content">
-          <div className="clinical-symbol">✚</div>
+          <div className="clinical-symbol"><BrandMark size={52} /></div>
           <span className="clinical-tag">
             SISTEMA DE GESTIÓN FARMACÉUTICA
           </span>
@@ -60,9 +62,9 @@ export function LoginPage() {
           </p>
 
           <div className="clinical-features">
-            <div><span>✓</span> Control de inventarios</div>
-            <div><span>✓</span> Seguimiento de caducidades</div>
-            <div><span>✓</span> Gestión segura de medicamentos</div>
+            <div><span><Icons.check aria-hidden="true" /></span> Control de inventarios</div>
+            <div><span><Icons.check aria-hidden="true" /></span> Seguimiento de caducidades</div>
+            <div><span><Icons.check aria-hidden="true" /></span> Gestión segura de medicamentos</div>
           </div>
         </div>
 
@@ -74,10 +76,10 @@ export function LoginPage() {
       <main className="clinical-panel">
         <div className="clinical-card">
           <div className="clinical-mobile-logo">
-            <span>✚</span> FARMACIAS
+            <span><BrandMark size={22} /></span> FARMACIAS
           </div>
 
-          <div className="clinical-welcome-icon">✚</div>
+          <div className="clinical-welcome-icon"><BrandMark size={26} /></div>
           <span className="clinical-eyebrow">
             PORTAL DE ACCESO
           </span>
@@ -126,7 +128,7 @@ export function LoginPage() {
                     : 'Mostrar contraseña'
                 }
               >
-                {showPassword ? 'Ocultar' : 'Mostrar'}
+                {showPassword ? <Icons.eyeOff aria-hidden="true" /> : <Icons.eye aria-hidden="true" />}
               </button>
             </div>
 
@@ -142,12 +144,12 @@ export function LoginPage() {
               disabled={busy}
             >
               {busy ? 'Iniciando sesión...' : 'Iniciar sesión'}
-              <span aria-hidden="true">→</span>
+              <Icons.arrowRight className="btn-icon" aria-hidden="true" />
             </button>
           </form>
 
           <div className="clinical-security">
-            <span>🔒</span>
+            <span><Icons.security aria-hidden="true" /></span>
             Acceso exclusivo para personal autorizado
           </div>
         </div>

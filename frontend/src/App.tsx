@@ -8,6 +8,7 @@ import { MovementsPage } from './pages/MovementsPage'
 import { KardexPage } from './pages/KardexPage'
 import { AlertsPage } from './pages/AlertsPage'
 import { ReportsPage } from './pages/ReportsPage'
+import { TelegramPage } from './pages/TelegramPage'
 import { AdminPage } from './pages/AdminPage'
 import { Layout } from './components/Layout'
 
@@ -24,6 +25,7 @@ function ProtectedRoutes() {
         <Route path="/kardex" element={<KardexPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
         <Route path="/reportes" element={<ReportsPage />} />
+        <Route path="/telegram" element={<TelegramPage />} />
         {user.role === 'ADMIN' && <Route path="/admin" element={<AdminPage />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

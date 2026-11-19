@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api, type Alert, type AlertConfiguration } from '../api'
+import { Icons } from '../components/icons'
 import { EmptyState, Field, Notice, PageHeader, StatusPill } from '../components/Ui'
 
 const labels: Record<Alert['alert_type'], string> = { PROXIMO_VENCER: 'Próximo a vencer', VENCIDO: 'Vencido', STOCK_MINIMO: 'Stock mínimo' }
@@ -60,7 +61,7 @@ export function AlertsPage() {
   }
 
   return <>
-    <PageHeader eyebrow="SEGUIMIENTO" title="Alertas" description="Priorizá lo que necesita una decisión hoy." action={<button className="primary-button" onClick={generate} disabled={generating}>{generating ? 'Generando…' : 'Generar alertas'}</button>} />
+    <PageHeader eyebrow="SEGUIMIENTO" title="Alertas" description="Priorizá lo que necesita una decisión hoy." action={<button className="primary-button" onClick={generate} disabled={generating}><Icons.alert className="btn-icon" aria-hidden="true" />{generating ? 'Generando…' : 'Generar alertas'}</button>} />
     {error && <Notice>{error}</Notice>}
     {success && <Notice tone="success">{success}</Notice>}
 
@@ -68,13 +69,13 @@ export function AlertsPage() {
       <div className="panel table-panel">
         <div className="table-heading"><div><h2>Alertas pendientes</h2><span>{alerts.length} sin leer</span></div></div>
         {alerts.length === 0 ? <EmptyState title="Todo bajo control" message="No hay alertas pendientes para esta sucursal." /> : <div className="alert-list">{alerts.map(alert => <div className="alert-list-row" key={alert.id}>
-          <span className={`alert-symbol ${alert.alert_type === 'VENCIDO' ? 'red' : 'amber'}`}>{alert.alert_type === 'STOCK_MINIMO' ? '!' : '◷'}</span>
+          <span className={`alert-symbol ${alert.alert_type === 'VENCIDO' ? 'red' : 'amber'}`}>{alert.alert_type === 'STOCK_MINIMO' ? <Icons.warning aria-hidden="true" /> : <Icons.clock aria-hidden="true" />}</span>
           <div className="alert-copy">
             <strong>{labels[alert.alert_type]} · {alert.medicine_name}</strong>
             <p>Lote {alert.lot_number} · vence {alert.expiration_date} · {alert.quantity} u. restantes · {alert.days_remaining} días{alert.threshold_days ? ` · umbral ${alert.threshold_days} días` : ''}</p>
           </div>
-          <StatusPill tone={alert.alert_type === 'VENCIDO' ? 'danger' : alert.alert_type === 'STOCK_MINIMO' ? 'warning' : 'warning'}>{labels[alert.alert_type]}</StatusPill>
-          <button className="secondary-button" onClick={() => markRead(alert.id)}>Marcar leída</button>
+          <StatusPill tone={alert.alert_type === 'VENCIDO' ? 'danger' : alert.alert_type === 'STOCK_MINIMO' ? 'warning' : 'warning'} icon={null}>{labels[alert.alert_type]}</StatusPill>
+          <button className="secondary-button" onClick={() => markRead(alert.id)}><Icons.check className="btn-icon" aria-hidden="true" />Marcar leída</button>
         </div>)}</div>}
       </div>
 
@@ -84,7 +85,7 @@ export function AlertsPage() {
           <Field label="Días de anticipación" hint="Separá varios valores con comas, por ejemplo 90, 60, 30.">
             <input value={thresholdsInput} onChange={event => setThresholdsInput(event.target.value)} placeholder="90, 60, 30" />
           </Field>
-          <div className="form-actions"><button className="primary-button" disabled={saving}>{saving ? 'Guardando…' : 'Guardar configuración'}</button></div>
+          <div className="form-actions"><button className="primary-button" disabled={saving}><Icons.settings className="btn-icon" aria-hidden="true" />{saving ? 'Guardando…' : 'Guardar configuración'}</button></div>
         </form>
         <ul className="hint-list" style={{ marginTop: 18 }}>
           <li>El job diario crea una alerta por cada umbral alcanzado.</li>
