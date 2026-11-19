@@ -4,7 +4,8 @@ import { LoginPage } from './pages/LoginPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { MedicinesPage } from './pages/MedicinesPage'
-import { MovementsPage } from './pages/MovementsPage'
+import { EntryPage } from './pages/EntryPage'
+import { SalePage } from './pages/SalePage'
 import { KardexPage } from './pages/KardexPage'
 import { AlertsPage } from './pages/AlertsPage'
 import { ReportsPage } from './pages/ReportsPage'
@@ -21,11 +22,13 @@ function ProtectedRoutes() {
         <Route path="/" element={<DashboardPage />} />
         <Route path="/inventario" element={<InventoryPage />} />
         <Route path="/medicamentos" element={<MedicinesPage />} />
-        <Route path="/movimientos" element={<MovementsPage />} />
+        <Route path="/movimientos" element={<Navigate to="/movimientos/entrada" replace />} />
+        <Route path="/movimientos/entrada" element={<EntryPage />} />
+        <Route path="/movimientos/salida" element={<SalePage />} />
         <Route path="/kardex" element={<KardexPage />} />
         <Route path="/alertas" element={<AlertsPage />} />
-        <Route path="/reportes" element={<ReportsPage />} />
         <Route path="/telegram" element={<TelegramPage />} />
+        {user.role === 'ADMIN' && <Route path="/reportes" element={<ReportsPage />} />}
         {user.role === 'ADMIN' && <Route path="/admin" element={<AdminPage />} />}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

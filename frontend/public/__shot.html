@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>shot</title>
+  <style>html,body{margin:0;background:#fff}iframe{border:0;display:block}</style>
+</head>
+<body>
+<script>
+  const params = new URLSearchParams(location.search)
+  localStorage.setItem('farmacias_token', params.get('t') || '')
+  const target = params.get('to') || '/'
+  const width = params.get('frame')
+  if (width) {
+    const frame = document.createElement('iframe')
+    frame.src = target
+    frame.style.width = width + 'px'
+    frame.style.height = (params.get('h') || 2400) + 'px'
+    document.body.appendChild(frame)
+  } else {
+    location.replace(target)
+  }
+</script>
+</body>
+</html>

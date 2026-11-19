@@ -1,0 +1,28 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>print preview</title></head>
+<body style="margin:0;background:#fff">
+<script>
+  const params = new URLSearchParams(location.search)
+  localStorage.setItem('farmacias_token', params.get('t') || '')
+  const frame = document.createElement('iframe')
+  frame.style.cssText = 'width:' + (params.get('w') || 688) + 'px;height:1400px;border:0;display:block;margin:0 auto'
+  frame.src = params.get('to') || '/reportes'
+  document.body.appendChild(frame)
+  frame.addEventListener('load', async () => {
+    const css = await (await fetch('/src/styles.css')).text()
+    const start = css.indexOf('@media print')
+    if (start < 0) return
+    let depth = 0, index = css.indexOf('{', start), begin = index + 1
+    for (let i = index; i < css.length; i += 1) {
+      if (css[i] === '{') depth += 1
+      if (css[i] === '}') { depth -= 1; if (depth === 0) { index = i; break } }
+    }
+    const rules = css.slice(begin, index)
+    const style = frame.contentDocument.createElement('style')
+    style.textContent = rules
+    frame.contentDocument.head.appendChild(style)
+  })
+</script>
+</body>
+</html>

@@ -215,7 +215,7 @@ export const api = {
   me: () => request<User>('/auth/me'),
   dashboard: () => request<DashboardReport>('/reportes/dashboard'),
 
-  inventory: (query = '') => request<InventoryItem[]>(`/inventario${queryString({ q: query })}`),
+  inventory: (params: { q?: string; branch_id?: number } = {}) => request<InventoryItem[]>(`/inventario${queryString(params)}`),
   medicines: (query = '', page = 1, pageSize = 100) => request<Medicine[]>(`/medicamentos${queryString({ q: query, page, page_size: pageSize })}`),
   barcodeLookup: (barcode: string) => request<Medicine & { total_stock: number; lots: Lot[] }>(`/medicamentos/barcode/${encodeURIComponent(barcode)}`),
   createMedicine: (payload: Record<string, unknown>) => request<Medicine>('/medicamentos', { method: 'POST', body: JSON.stringify(payload) }),
@@ -228,7 +228,7 @@ export const api = {
   sale: (payload: SalePayload) => request<Movement[]>('/movimientos/salida', { method: 'POST', body: JSON.stringify(payload) }),
   kardex: (params: { medicine_id?: number; lot_id?: number; desde?: string; hasta?: string } = {}) => request<KardexEntry[]>(`/kardex${queryString(params)}`),
 
-  alerts: (read?: boolean) => request<Alert[]>(`/alertas${queryString({ leida: read })}`),
+  alerts: (params: { read?: boolean; tipo?: Alert['alert_type'] } = {}) => request<Alert[]>(`/alertas${queryString({ leida: params.read, tipo: params.tipo })}`),
   markAlertRead: (id: number) => request<Alert>(`/alertas/${id}/leida`, { method: 'PATCH' }),
   alertConfig: () => request<AlertConfiguration>('/alertas/configuracion'),
   setAlertConfig: (thresholds: number[]) => request<AlertConfiguration>('/alertas/configuracion', { method: 'PUT', body: JSON.stringify({ thresholds }) }),

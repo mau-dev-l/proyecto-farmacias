@@ -1,32 +1,44 @@
 import { useEffect, useState } from 'react'
 import { Fragment } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { api, type InventoryItem } from '../api'
+import { Link } from 'react-router-dom'
+import { api, type Branch, type InventoryItem } from '../api'
+import { useAuth } from '../auth'
 import { Icons } from '../components/icons'
 import { EmptyState, Notice, PageHeader, StatusPill } from '../components/Ui'
 
 export function InventoryPage() {
-  const navigate = useNavigate()
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [branches, setBranches] = useState<Branch[]>([])
+  const [branchId, setBranchId] = useState(() => String(user?.branch_id ?? ''))
   const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [expanded, setExpanded] = useState<number | null>(null)
 
   useEffect(() => {
+    if (!isAdmin) return
+    api.branches().then(setBranches).catch(() => setBranches([]))
+  }, [isAdmin])
+
+  useEffect(() => {
     setLoading(true)
     setError('')
-    api.inventory(query).then(setItems).catch(err => setError(err.message)).finally(() => setLoading(false))
-  }, [query])
-
-  const exportCsv = async () => {
-    try { await api.exportReport('inventario') } catch (err) { setError(err instanceof Error ? err.message : 'No se pudo exportar') }
-  }
+    api.inventory({ q: query, branch_id: branchId ? Number(branchId) : undefined })
+      .then(setItems)
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false))
+  }, [query, branchId])
 
   return <>
-    <PageHeader eyebrow="CONTROL DE EXISTENCIAS" title="Inventario" description="Una lectura por medicamento de todo lo que está disponible." action={<div className="header-actions"><button className="secondary-button" onClick={exportCsv}><Icons.download className="btn-icon" aria-hidden="true" />Exportar CSV</button><button className="primary-button" onClick={() => navigate('/movimientos')}><Icons.plus className="btn-icon" aria-hidden="true" />Registrar entrada</button></div>} />
+    <PageHeader eyebrow="CONTROL DE EXISTENCIAS" title="Inventario" description="Una lectura por medicamento de todo lo que está disponible." action={<Link className="primary-button" to="/movimientos/entrada"><Icons.plus className="btn-icon" aria-hidden="true" />Registrar entrada</Link>} />
     {error && <Notice>{error}</Notice>}
-    <div className="toolbar"><label className="search-field"><Icons.search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar por nombre o código…" /></label><span className="toolbar-note">{items.length} medicamentos encontrados</span></div>
+    <div className="toolbar">
+      <label className="search-field"><Icons.search aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar por nombre o código…" /></label>
+      {isAdmin && branches.length > 0 && <label className="branch-filter"><Icons.branch aria-hidden="true" /><select value={branchId} onChange={event => setBranchId(event.target.value)} aria-label="Sucursal">{branches.map(branch => <option key={branch.id} value={branch.id}>{branch.name}</option>)}</select></label>}
+      <span className="toolbar-note">{items.length} medicamentos encontrados</span>
+    </div>
     <div className="panel table-panel">
       <div className="table-heading"><div><h2>Existencias actuales</h2><span>Stock total y desglose por lote</span></div></div>
       {loading ? <div className="loading-row">Cargando existencias…</div> : items.length === 0 ? <EmptyState title="No hay medicamentos" message="Probá con otra búsqueda o agregá un medicamento al catálogo." /> : <div className="table-scroll"><table><thead><tr><th>Medicamento</th><th>Código</th><th>Stock actual</th><th>Stock mínimo</th><th>Estado</th><th /></tr></thead><tbody>{items.map(item => {
